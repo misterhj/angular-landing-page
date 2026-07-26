@@ -6,13 +6,13 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes),
-    // Habilitamos HttpClient con Fetch y el Interceptor de Auth que crearemos
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor]) 
-    )
-  ]
+	providers: [
+		provideZoneChangeDetection({ eventCoalescing: true }),
+		provideRouter(routes),
+		// Habilitamos HttpClient con Fetch y el Interceptor de Auth que crearemos
+		provideHttpClient(
+			withFetch(),
+			withInterceptors([authInterceptor])
+		)
+	]
 };
