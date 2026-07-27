@@ -1,0 +1,21 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Category } from '../models/category.interface';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class CategoryService {
+  private http = inject(HttpClient);
+  private API_URL = `${environment.apiUrl}/categories`;
+
+  getCategories(): Observable<Category[]> {
+    return this.http.get<Category[]>(this.API_URL);
+  }
+
+  createCategory(category: Partial<Category>): Observable<Category> {
+    return this.http.post<Category>(this.API_URL, category);
+  }
+}

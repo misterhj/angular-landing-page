@@ -3,10 +3,14 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment'; // <--- Importar aquí
+import { environment } from '../../../environments/environment';
 
 export interface LoginResponse {
   token: string;
+}
+
+export interface RegisterResponse {
+  message: string;
 }
 
 @Injectable({
@@ -17,11 +21,11 @@ export class AuthService {
   private router = inject(Router);
   private platformId = inject(PLATFORM_ID);
 
-  // Concatenamos la base con el endpoint específico
   private API_URL = `${environment.apiUrl}/auth`;
 
   isAuthenticated = signal<boolean>(this.checkTokenExists());
 
+  // METODO LOGIN
   login(credentials: { username: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials).pipe(
       tap((response) => {
@@ -33,6 +37,12 @@ export class AuthService {
     );
   }
 
+  // METODO REGISTER
+  register(credentials: { username: string; password: string }): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.API_URL}/register`, credentials);
+  }
+
+  // METODO LOGOUT
   logout(): void {
     this.deleteCookie('admin-token');
     this.isAuthenticated.set(false);

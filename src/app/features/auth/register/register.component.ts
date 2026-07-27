@@ -1,55 +1,57 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router'; // <-- Importamos RouterLink
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink], // <-- Agregado RouterLink
-  templateUrl: './login.component.html'
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  templateUrl: './register.component.html'
 })
-export class LoginComponent {
+export class RegisterComponent {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
   private router = inject(Router);
 
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
-  
-  // Señal para controlar la visibilidad del password
+  successMessage = signal<string | null>(null);
   showPassword = signal(false);
 
-  loginForm = this.fb.group({
-    username: ['', [Validators.required]],
+  registerForm = this.fb.group({
+    username: ['', [Validators.required, Validators.minLength(3)]],
     password: ['', [Validators.required, Validators.minLength(6)]]
   });
 
-  // Método para alternar el estado (true / false)
   toggleShowPassword(): void {
     this.showPassword.update(prev => !prev);
   }
 
   onSubmit(): void {
-    if (this.loginForm.invalid) {
-      this.loginForm.markAllAsTouched();
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
       return;
     }
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
 
-    const { username, password } = this.loginForm.value;
+    const { username, password } = this.registerForm.value;
 
-    this.authService.login({ username: username!, password: password! }).subscribe({
+    this.authService.register({ username: username!, password: password! }).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/admin/dashboard']);
+        this.successMessage.set('Usuario registrado exitosamente. Redirigiendo al login...');
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 1500);
       },
       error: (err) => {
         this.isLoading.set(false);
-        this.errorMessage.set(err?.error?.message || 'Credenciales erróneas o fallo de conexión.');
+        this.errorMessage.set(err?.error?.message || 'Ocurrió un error al registrar el usuario.');
       }
     });
   }
