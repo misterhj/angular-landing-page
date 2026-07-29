@@ -2,7 +2,15 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ProductService } from '../../../core/services/product.service';
+import { CategoryService } from '../../../core/services/category.service';
+import { BrandService } from '../../../core/services/brand.service';
+import { ModelService } from '../../../core/services/model.service';
+import { SectionService } from '../../../core/services/section.service';
 import { Product } from '../../../core/models/product.interface';
+import { Category } from '../../../core/models/category.interface';
+import { Brand } from '../../../core/models/brand.interface';
+import { Model } from '../../../core/models/model.interface';
+import { Section } from '../../../core/models/section.interface';
 
 @Component({
 	selector: 'app-products',
@@ -12,35 +20,53 @@ import { Product } from '../../../core/models/product.interface';
 })
 export class ProductsComponent implements OnInit {
 	private productService = inject(ProductService);
+	private categoryService = inject(CategoryService);
+	private brandService = inject(BrandService);
+	private modelService = inject(ModelService);
+	private sectionService = inject(SectionService);
 	private fb = inject(FormBuilder);
 
 	products = signal<Product[]>([]);
+	categories = signal<Category[]>([]);
+	availableSubcategories = signal<Category[]>([]);
+	availableBrands = signal<Brand[]>([]);
+	availableModels = signal<Model[]>([]);
+	availableSections = signal<Section[]>([]);
+
 	searchQuery = signal<string>('');
 	isLoading = signal<boolean>(true);
 
-	// Señales para el modal y estado de guardado
 	isModalOpen = signal<boolean>(false);
 	isSaving = signal<boolean>(false);
 
-	// Formulario para crear producto
 	productForm = this.fb.group({
-		name: ['', [Validators.required]],
+		name: ['', Validators.required],
 		description: [''],
 		price: [0, [Validators.required, Validators.min(0)]],
-		imageUrl: ['']
+		imageUrl: [''],
+		categoryId: [null as number | null],
+		subcategoryId: [null as number | null],
+		brandId: [null as number | null],
+		modelId: [null as number | null],
+		sectionId: [null as number | null]
 	});
 
 	filteredProducts = computed(() => {
 		const q = this.searchQuery().toLowerCase().trim();
 		if (!q) return this.products();
+
 		return this.products().filter(p =>
 			p.name.toLowerCase().includes(q) ||
-			p.category?.name?.toLowerCase().includes(q)
+			p.category?.name.toLowerCase().includes(q) ||
+			p.brand?.name.toLowerCase().includes(q) ||
+			p.model?.name.toLowerCase().includes(q) ||
+			p.section?.name.toLowerCase().includes(q)
 		);
 	});
 
 	ngOnInit(): void {
 		this.loadProducts();
+		this.loadCatalogData();
 	}
 
 	loadProducts(): void {
@@ -54,8 +80,39 @@ export class ProductsComponent implements OnInit {
 		});
 	}
 
+	loadCatalogData(): void {
+		this.categoryService.getCategories().subscribe(data => this.categories.set(data));
+		this.brandService.getBrands().subscribe(data => this.availableBrands.set(data));
+		this.sectionService.getSections().subscribe(data => this.availableSections.set(data));
+	}
+
+	onCategoryChange(categoryId: string | number | null): void {
+		if (!categoryId) {
+			this.availableSubcategories.set([]);
+			this.productForm.patchValue({ subcategoryId: null });
+			return;
+		}
+
+		const selectedCat = this.categories().find(c => c.id === Number(categoryId));
+		this.availableSubcategories.set(selectedCat?.subcategories || []);
+		this.productForm.patchValue({ subcategoryId: null });
+	}
+
+	onBrandChange(brandId: number | null | undefined): void {
+		this.productForm.patchValue({ modelId: null });
+		this.availableModels.set([]);
+
+		if (brandId) {
+			this.modelService.getModels(Number(brandId)).subscribe(models => {
+				this.availableModels.set(models);
+			});
+		}
+	}
+
 	openModal(): void {
-		this.productForm.reset({ price: 0 });
+		this.productForm.reset({ price: 0, categoryId: null, subcategoryId: null, brandId: null, modelId: null, sectionId: null });
+		this.availableSubcategories.set([]);
+		this.availableModels.set([]);
 		this.isModalOpen.set(true);
 	}
 
@@ -70,16 +127,27 @@ export class ProductsComponent implements OnInit {
 		}
 
 		this.isSaving.set(true);
-		const newProduct = this.productForm.value as Partial<Product>;
+		const formVal = this.productForm.value;
+
+		const newProduct: Partial<Product> = {
+			name: formVal.name!,
+			description: formVal.description || undefined,
+			price: Number(formVal.price),
+			imageUrl: formVal.imageUrl || undefined,
+			categoryId: formVal.categoryId ? Number(formVal.categoryId) : null,
+			subcategoryId: formVal.subcategoryId ? Number(formVal.subcategoryId) : null,
+			brandId: formVal.brandId ? Number(formVal.brandId) : null,
+			modelId: formVal.modelId ? Number(formVal.modelId) : null,
+			sectionId: formVal.sectionId ? Number(formVal.sectionId) : null
+		};
 
 		this.productService.createProduct(newProduct).subscribe({
 			next: (createdProduct) => {
-				// Actualizamos la lista local añadiendo el nuevo producto arriba
 				this.products.update(current => [createdProduct, ...current]);
 				this.isSaving.set(false);
 				this.closeModal();
 			},
-			error: (err) => {
+			error: () => {
 				this.isSaving.set(false);
 				alert('Error al guardar el producto.');
 			}

@@ -32,11 +32,34 @@ export const routes: Routes = [
 		children: [
 			{
 				path: 'dashboard',
-				loadComponent: () => import('./features/admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+				loadComponent: () => import('./features/admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
+				data: { title: 'Dashboard', icon: 'dashboard', showInSidebar: true }
 			},
 			{
-				path: 'products',
-				loadComponent: () => import('./features/admin/products/products.component').then(m => m.ProductsComponent)
+				path: 'catalog',
+				data: { title: 'Catálogo', icon: 'catalog', isDropdown: true },
+				children: [
+					{
+						path: 'products',
+						loadComponent: () => import('./features/admin/products/products.component').then(m => m.ProductsComponent),
+						data: { title: 'Productos' }
+					},
+					{
+						path: 'categories',
+						loadComponent: () => import('./features/admin/categories/categories.component').then(m => m.CategoriesComponent),
+						data: { title: 'Categorías y Subcats' }
+					},
+					{
+						path: 'brands',
+						loadComponent: () => import('./features/admin/brands/brands.component').then(m => m.BrandsComponent),
+						data: { title: 'Marcas y Modelos' }
+					},
+					{
+						path: 'sections',
+						loadComponent: () => import('./features/admin/sections/sections.component').then(m => m.SectionsComponent),
+						data: { title: 'Secciones' }
+					}
+				]
 			},
 			{
 				path: '',

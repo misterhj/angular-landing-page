@@ -1,0 +1,76 @@
+<div class="p-6 max-w-7xl mx-auto space-y-6">
+    <h1 class="text-2xl font-bold text-white">Gestión de Marcas y Modelos</h1>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Columna Izquierda: Marcas -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h2 class="text-lg font-semibold text-white">1. Marcas</h2>
+
+            <!-- Input Crear Marca -->
+            <div class="flex gap-2">
+                <input [(ngModel)]="newBrandName" placeholder="Ej: Apple, Samsung..."
+                    class="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                <button (click)="createBrand()"
+                    class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-sm font-medium rounded-lg transition">
+                    Agregar
+                </button>
+            </div>
+
+            <!-- Lista de Marcas -->
+            <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                <div *ngFor="let b of brands()" (click)="selectBrand(b)"
+                    [class.border-blue-500]="selectedBrand()?.id === b.id"
+                    [class.bg-slate-800/80]="selectedBrand()?.id === b.id"
+                    class="flex items-center justify-between bg-slate-800/40 border border-slate-700/60 p-3 rounded-lg cursor-pointer hover:bg-slate-800 transition">
+                    <span class="text-sm font-medium text-slate-200">{{ b.name }}</span>
+                    <button (click)="deleteBrand(b.id!); $event.stopPropagation()"
+                        class="text-rose-400 hover:text-rose-300 p-1 text-xs">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Modelos de la Marca Seleccionada -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h2 class="text-lg font-semibold text-white">
+                2. Modelos {{ selectedBrand() ? 'de ' + selectedBrand()?.name : '' }}
+            </h2>
+
+            <div *ngIf="selectedBrand(); else noBrandSelected" class="space-y-4">
+                <!-- Input Crear Modelo -->
+                <div class="flex gap-2">
+                    <input [(ngModel)]="newModelName" placeholder="Ej: iPhone 15 Pro, Galaxy S24..."
+                        class="flex-1 bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500" />
+                    <button (click)="createModel()"
+                        class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-sm font-medium rounded-lg transition">
+                        Agregar
+                    </button>
+                </div>
+
+                <!-- Lista de Modelos -->
+                <div class="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                    <div *ngFor="let m of models()"
+                        class="flex items-center justify-between bg-slate-800/40 border border-slate-700/60 p-3 rounded-lg">
+                        <span class="text-sm text-slate-300">{{ m.name }}</span>
+                        <button (click)="deleteModel(m.id!)" class="text-rose-400 hover:text-rose-300 p-1 text-xs">
+                            ✕
+                        </button>
+                    </div>
+                    <p *ngIf="models().length === 0" class="text-xs text-slate-500 text-center py-4">
+                        No hay modelos asociados a esta marca.
+                    </p>
+                </div>
+            </div>
+
+            <ng-template #noBrandSelected>
+                <div class="flex items-center justify-center h-48 border border-dashed border-slate-800 rounded-lg">
+                    <p class="text-sm text-slate-500">Selecciona una marca de la izquierda para ver y agregar sus
+                        modelos.</p>
+                </div>
+            </ng-template>
+        </div>
+
+    </div>
+</div>

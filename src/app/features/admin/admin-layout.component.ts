@@ -5,10 +5,10 @@ import { SidebarComponent } from '../../shared/components/sidebar/sidebar.compon
 import { HeaderComponent } from '../../shared/components/header/header.component';
 
 @Component({
-  selector: 'app-admin-layout',
-  standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent, HeaderComponent],
-  template: `
+	selector: 'app-admin-layout',
+	standalone: true,
+	imports: [CommonModule, RouterOutlet, SidebarComponent, HeaderComponent],
+	template: `
     <div class="flex min-h-screen bg-slate-950 font-sans text-slate-100 antialiased">
       <!-- Sidebar -->
       <app-sidebar />
@@ -25,4 +25,4 @@ import { HeaderComponent } from '../../shared/components/header/header.component
     </div>
   `
 })
-export class AdminLayoutComponent {}
+export class AdminLayoutComponent { }
