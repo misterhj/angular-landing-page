@@ -32,7 +32,7 @@ export class SidebarComponent {
 
 		const items: MenuItem[] = adminRoute.children
 			.filter(r => r.data && r.data['title'])
-			.map(r => this.mapRouteToMenuItem(r, 'admin'));
+			.map(r => this.mapRouteToMenuItem(r, '/admin'));
 
 		this.menuItems.set(items);
 	}

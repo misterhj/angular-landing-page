@@ -27,7 +27,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
         <!-- Admin Shortcut / Call to Action -->
         <div class="flex items-center gap-4">
-          <a routerLink="/login" class="text-xs text-slate-400 hover:text-white transition hidden sm:block">
+          <a routerLink="/admin" class="text-xs text-slate-400 hover:text-white transition hidden sm:block">
             Panel Admin
           </a>
           <a routerLink="/catalog" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg shadow-lg hover:shadow-blue-500/25 transition">

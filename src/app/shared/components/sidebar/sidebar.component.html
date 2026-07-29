@@ -1,44 +1,32 @@
 <nav class="space-y-1 px-3 py-4">
-  <ng-container *ngFor="let item of menuItems()">
+	<ng-container *ngFor="let item of menuItems()">
 
-    <!-- Opción Simple (Sin hijos) -->
-    <a 
-      *ngIf="!item.isDropdown" 
-      [routerLink]="item.path" 
-      routerLinkActive="bg-slate-800 text-blue-400 font-semibold"
-      class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition"
-    >
-      <span>{{ item.title }}</span>
-    </a>
+		<!-- Opción Simple (Sin hijos) -->
+		<a *ngIf="!item.isDropdown" [routerLink]="item.path" routerLinkActive="bg-slate-800 text-blue-400 font-semibold"
+			class="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">
+			<span>{{ item.title }}</span>
+		</a>
 
-    <!-- Opción con Submenú (Dropdown) -->
-    <div *ngIf="item.isDropdown" class="space-y-1">
-      <button 
-        (click)="toggleDropdown(item.title)"
-        class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition"
-      >
-        <span>{{ item.title }}</span>
-        <svg 
-          class="w-4 h-4 transition-transform duration-200" 
-          [class.rotate-180]="isDropdownOpen(item.title)" 
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-        </svg>
-      </button>
+		<!-- Opción con Submenú (Dropdown) -->
+		<div *ngIf="item.isDropdown" class="space-y-1">
+			<button (click)="toggleDropdown(item.title)"
+				class="w-full flex items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white rounded-lg transition">
+				<span>{{ item.title }}</span>
+				<svg class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="isDropdownOpen(item.title)"
+					fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+				</svg>
+			</button>
 
-      <!-- Subítems Anidados -->
-      <div *ngIf="isDropdownOpen(item.title)" class="pl-6 space-y-1">
-        <a 
-          *ngFor="let child of item.children"
-          [routerLink]="child.path" 
-          routerLinkActive="bg-slate-800/80 text-blue-400 font-semibold"
-          class="block px-3 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-md transition"
-        >
-          {{ child.title }}
-        </a>
-      </div>
-    </div>
+			<!-- Subítems Anidados -->
+			<div *ngIf="isDropdownOpen(item.title)" class="pl-6 space-y-1">
+				<a *ngFor="let child of item.children" [routerLink]="child.path"
+					routerLinkActive="bg-slate-800/80 text-blue-400 font-semibold"
+					class="block px-3 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/40 rounded-md transition">
+					{{ child.title }}
+				</a>
+			</div>
+		</div>
 
-  </ng-container>
+	</ng-container>
 </nav>

@@ -6,70 +6,75 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface LoginResponse {
-  token: string;
+	token: string;
 }
 
 export interface RegisterResponse {
-  message: string;
+	message: string;
 }
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
 export class AuthService {
-  private http = inject(HttpClient);
-  private router = inject(Router);
-  private platformId = inject(PLATFORM_ID);
+	private http = inject(HttpClient);
+	private router = inject(Router);
+	private platformId = inject(PLATFORM_ID);
 
-  private API_URL = `${environment.apiUrl}/auth`;
+	private API_URL = `${environment.apiUrl}/auth`;
 
-  isAuthenticated = signal<boolean>(this.checkTokenExists());
+	isAuthenticated = signal<boolean>(this.checkTokenExists());
 
-  // METODO LOGIN
-  login(credentials: { username: string; password: string }): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials).pipe(
-      tap((response) => {
-        if (response && response.token) {
-          this.setCookie('admin-token', response.token, 7);
-          this.isAuthenticated.set(true);
-        }
-      })
-    );
-  }
+	// METODO LOGIN
+	login(credentials: { username: string; password: string }): Observable<LoginResponse> {
+		return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials).pipe(
+			tap((response) => {
+				if (response && response.token) {
+					this.setCookie('admin-token', response.token, 7);
+					this.isAuthenticated.set(true);
+				}
+			})
+		);
+	}
 
-  // METODO REGISTER
-  register(credentials: { username: string; password: string }): Observable<RegisterResponse> {
-    return this.http.post<RegisterResponse>(`${this.API_URL}/register`, credentials);
-  }
+	// METODO REGISTER
+	register(credentials: { username: string; password: string }): Observable<RegisterResponse> {
+		return this.http.post<RegisterResponse>(`${this.API_URL}/register`, credentials);
+	}
 
-  // METODO LOGOUT
-  logout(): void {
-    this.deleteCookie('admin-token');
-    this.isAuthenticated.set(false);
-    this.router.navigate(['/login']);
-  }
+	// METODO LOGOUT
+	logout(): void {
+		this.deleteCookie('admin-token');
+		this.isAuthenticated.set(false);
+		this.router.navigate(['/login']);
+	}
 
-  private checkTokenExists(): boolean {
-    return !!this.getCookie('admin-token');
-  }
+	// Cambio: Método público para consultarlo en el Guard si es necesario
+	public checkTokenExists(): boolean {
+		return !!this.getCookie('admin-token');
+	}
 
-  private setCookie(name: string, value: string, days: number): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const date = new Date();
-    date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
-    document.cookie = `${name}=${value};expires=${date.toUTCString()};path=/`;
-  }
+	private setCookie(name: string, value: string, days: number): void {
+		if (!isPlatformBrowser(this.platformId)) return;
+		
+		const seconds = days * 24 * 60 * 60;
+		const date = new Date();
+		date.setTime(date.getTime() + seconds * 1000);
+		
+		// Añadimos max-age y SameSite=Lax para compatibilidad en redes locales y dispositivos móviles
+		document.cookie = `${name}=${value};expires=${date.toUTCString()};max-age=${seconds};path=/;SameSite=Lax`;
+	}
 
-  private getCookie(name: string): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-    return null;
-  }
+	public getCookie(name: string): string | null {
+		if (!isPlatformBrowser(this.platformId)) return null;
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+		return null;
+	}
 
-  private deleteCookie(name: string): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;
-  }
+	private deleteCookie(name: string): void {
+		if (!isPlatformBrowser(this.platformId)) return;
+		document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;max-age=0;path=/;SameSite=Lax`;
+	}
 }
