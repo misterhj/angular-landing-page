@@ -49,6 +49,25 @@ export class AuthService {
 		this.router.navigate(['/login']);
 	}
 
+	getUserName(): string {
+		const token = this.getCookie('admin-token');
+		if (!token) return 'Admin';
+
+		try {
+			const payloadBase64 = token.split('.')[1];
+			const decodedJson = atob(payloadBase64);
+			const decoded = JSON.parse(decodedJson);
+			
+			// Retorna el claim de nombre o sub, o 'Admin' por defecto
+			return decoded['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] 
+				|| decoded.sub 
+				|| decoded.unique_name 
+				|| 'Admin';
+		} catch {
+			return 'Admin';
+		}
+	}
+
 	// Cambio: Método público para consultarlo en el Guard si es necesario
 	public checkTokenExists(): boolean {
 		return !!this.getCookie('admin-token');

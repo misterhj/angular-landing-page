@@ -1,0 +1,92 @@
+<div class="min-h-screen bg-slate-900 text-slate-100 relative">
+
+  <!-- 1. Fondo OSCURO (Backdrop) solo para móviles cuando el sidebar está abierto -->
+  <div *ngIf="sidebarOpen()" 
+       (click)="toggleSidebar()" 
+       class="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity">
+  </div>
+
+  <!-- 2. SIDEBAR RESPONSIVO (Fixed para deslizamiento suave en cualquier pantalla) -->
+  <aside 
+    [class.translate-x-0]="sidebarOpen()" 
+    [class.-translate-x-full]="!sidebarOpen()"
+    class="fixed inset-y-0 left-0 z-50 w-64 bg-slate-950 border-r border-slate-800 transform transition-transform duration-300 ease-in-out flex flex-col shrink-0">
+    
+    <!-- Header del Sidebar (Logo + Nombre) -->
+    <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-md">
+          CZ
+        </div>
+        <span class="font-bold text-base text-white tracking-wide">Case Zone Admin</span>
+      </div>
+
+      <!-- Botón X para cerrar en móviles -->
+      <button (click)="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white p-1">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Menú de navegación dinámico -->
+    <div class="flex-1 overflow-y-auto">
+      <app-sidebar></app-sidebar>
+    </div>
+  </aside>
+
+  <!-- 3. CONTENIDO PRINCIPAL (Se desplaza dinámicamente si el sidebar está abierto o cerrado) -->
+  <div [class.md:pl-64]="sidebarOpen()"
+       [class.md:pl-0]="!sidebarOpen()"
+       class="min-h-screen flex flex-col transition-all duration-300 ease-in-out">
+    
+    <!-- HEADER SUPERIOR -->
+    <header class="h-16 bg-slate-950/90 backdrop-blur-md border-b border-slate-800 px-4 flex items-center justify-between sticky top-0 z-30">
+      
+      <!-- Lado Izquierdo: Botón Hamburguesa + Título -->
+      <div class="flex items-center gap-3">
+        <button (click)="toggleSidebar()" 
+                class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition cursor-pointer"
+                title="Alternar Menú">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <h1 class="text-sm sm:text-base font-semibold text-slate-200">Panel de Administración</h1>
+      </div>
+
+      <!-- Lado Derecho: Usuario Logueado + Avatar + Salir -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        
+        <!-- Perfil de usuario -->
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-blue-500/30">
+            {{ userInitial() }}
+          </div>
+          <span class="text-xs sm:text-sm font-medium text-slate-300 hidden sm:inline">
+            {{ username() }}
+          </span>
+        </div>
+
+        <div class="h-4 w-[1px] bg-slate-800 hidden sm:block"></div>
+
+        <!-- Botón Salir -->
+        <button (click)="logout()" 
+                class="flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300 font-medium px-2.5 py-1.5 rounded-lg border border-red-500/20 hover:bg-red-500/10 transition cursor-pointer">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 01-3-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="hidden sm:inline">Salir</span>
+        </button>
+
+      </div>
+    </header>
+
+    <!-- ÁREA DE CONTENIDO (Páginas del admin) -->
+    <main class="flex-1 p-4 sm:p-6">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+</div>

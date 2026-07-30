@@ -18,4 +18,12 @@ export class ProductService {
   createProduct(product: Partial<Product>): Observable<Product> {
     return this.http.post<Product>(this.API_URL, product);
   }
+
+  updateProduct(id: number, product: Partial<Product>): Observable<Product> {
+    return this.http.put<Product>(`${this.API_URL}/${id}`, product);
+  }
+
+  deleteProduct(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.API_URL}/${id}`);
+  }
 }

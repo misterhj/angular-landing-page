@@ -1,24 +1,33 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
+import { inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { catchError, throwError, EMPTY } from 'rxjs';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
+    const platformId = inject(PLATFORM_ID);
+
     return next(req).pipe(
         catchError((error: HttpErrorResponse) => {
+
             let customErrorMessage = 'Ocurrió un error inesperado.';
 
-            // status === 0 significa que la petición no llegó al servidor (CORS, red, API apagada)
             if (error.status === 0) {
-                customErrorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté encendido y que la URL o los permisos CORS sean correctos.';
+                customErrorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté encendido.';
             } else if (error.status === 401) {
-                customErrorMessage = 'No autorizado. Verifica tus credenciales o token.';
+                customErrorMessage = 'No autorizado.';
             } else if (error.status === 403) {
-                customErrorMessage = 'No tienes permisos para realizar esta acción.';
+                customErrorMessage = 'Sin permisos.';
             } else if (error.error?.message) {
-                // Mensaje personalizado desde el backend si existe
                 customErrorMessage = error.error.message;
             }
 
-            // Devolvemos el error transformado como un objeto Error estándar
+            if (isPlatformBrowser(platformId)) {
+                console.error('Error HTTP en cliente:', error);
+            } else {
+                console.error(`[SSR HTTP Error] ${req.method} ${req.url}:`, error.message);
+                return EMPTY;
+            }
+
             return throwError(() => new Error(customErrorMessage));
         })
     );

@@ -38,6 +38,7 @@ export class ProductsComponent implements OnInit {
 
 	isModalOpen = signal<boolean>(false);
 	isSaving = signal<boolean>(false);
+	editingProductId = signal<number | null>(null);
 
 	productForm = this.fb.group({
 		name: ['', Validators.required],
@@ -81,9 +82,20 @@ export class ProductsComponent implements OnInit {
 	}
 
 	loadCatalogData(): void {
-		this.categoryService.getCategories().subscribe(data => this.categories.set(data));
-		this.brandService.getBrands().subscribe(data => this.availableBrands.set(data));
-		this.sectionService.getSections().subscribe(data => this.availableSections.set(data));
+		this.categoryService.getCategories().subscribe({
+			next: data => this.categories.set(data),
+			error: err => console.error('Error cargando categorías:', err)
+		});
+
+		this.brandService.getBrands().subscribe({
+			next: data => this.availableBrands.set(data),
+			error: err => console.error('Error cargando marcas:', err)
+		});
+
+		this.sectionService.getSections().subscribe({
+			next: data => this.availableSections.set(data),
+			error: err => console.error('Error cargando secciones:', err)
+		});
 	}
 
 	onCategoryChange(categoryId: string | number | null): void {
@@ -110,14 +122,46 @@ export class ProductsComponent implements OnInit {
 	}
 
 	openModal(): void {
+		this.editingProductId.set(null);
 		this.productForm.reset({ price: 0, categoryId: null, subcategoryId: null, brandId: null, modelId: null, sectionId: null });
 		this.availableSubcategories.set([]);
 		this.availableModels.set([]);
 		this.isModalOpen.set(true);
 	}
 
+	onEditProduct(product: Product): void {
+		if (!product.id) return;
+		this.editingProductId.set(product.id);
+
+		// Cargar subcategorías si tiene categoría seleccionada
+		if (product.categoryId) {
+			const selectedCat = this.categories().find(c => c.id === product.categoryId);
+			this.availableSubcategories.set(selectedCat?.subcategories || []);
+		}
+
+		// Cargar modelos si tiene marca seleccionada
+		if (product.brandId) {
+			this.modelService.getModels(product.brandId).subscribe(models => this.availableModels.set(models));
+		}
+
+		this.productForm.patchValue({
+			name: product.name,
+			description: product.description || '',
+			price: product.price,
+			imageUrl: product.imageUrl || '',
+			categoryId: product.categoryId || null,
+			subcategoryId: product.subcategoryId || null,
+			brandId: product.brandId || null,
+			modelId: product.modelId || null,
+			sectionId: product.sectionId || null
+		});
+
+		this.isModalOpen.set(true);
+	}
+
 	closeModal(): void {
 		this.isModalOpen.set(false);
+		this.editingProductId.set(null);
 	}
 
 	onSaveProduct(): void {
@@ -129,7 +173,7 @@ export class ProductsComponent implements OnInit {
 		this.isSaving.set(true);
 		const formVal = this.productForm.value;
 
-		const newProduct: Partial<Product> = {
+		const payload: Partial<Product> = {
 			name: formVal.name!,
 			description: formVal.description || undefined,
 			price: Number(formVal.price),
@@ -141,16 +185,51 @@ export class ProductsComponent implements OnInit {
 			sectionId: formVal.sectionId ? Number(formVal.sectionId) : null
 		};
 
-		this.productService.createProduct(newProduct).subscribe({
-			next: (createdProduct) => {
-				this.products.update(current => [createdProduct, ...current]);
-				this.isSaving.set(false);
-				this.closeModal();
-			},
-			error: () => {
-				this.isSaving.set(false);
-				alert('Error al guardar el producto.');
-			}
-		});
+		const editId = this.editingProductId();
+
+		if (editId) {
+			// EDITAR PRODUCTO
+			this.productService.updateProduct(editId, payload).subscribe({
+				next: (updatedProduct) => {
+					this.products.update(current => current.map(p => p.id === editId ? updatedProduct : p));
+					this.isSaving.set(false);
+					this.closeModal();
+				},
+				error: () => {
+					this.isSaving.set(false);
+					alert('Error al actualizar el producto.');
+				}
+			});
+		} else {
+			// CREAR PRODUCTO NUEVO
+			this.productService.createProduct(payload).subscribe({
+				next: (createdProduct) => {
+					this.products.update(current => [createdProduct, ...current]);
+					this.isSaving.set(false);
+					this.closeModal();
+				},
+				error: () => {
+					this.isSaving.set(false);
+					alert('Error al guardar el producto.');
+				}
+			});
+		}
+	}
+
+	onDeleteProduct(product: Product): void {
+		if (!product.id) return;
+		if (confirm(`¿Estás seguro de eliminar "${product.name}"?`)) {
+			this.productService.deleteProduct(product.id).subscribe({
+				next: () => {
+					this.products.update(current => current.filter(p => p.id !== product.id));
+				},
+				error: () => alert('No se pudo eliminar el producto.')
+			});
+		}
+	}
+
+	// Ocultar imagen si la URL scrapeada da error 404
+	onImgError(product: Product): void {
+		product.imageUrl = undefined;
 	}
 }
