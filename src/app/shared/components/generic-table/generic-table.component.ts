@@ -20,8 +20,8 @@ import {
     ColumnFiltersState
 } from '@tanstack/angular-table';
 
-import { TableDataService } from '../../../core/services/table-data.service';
-import { TableQueryDto } from '../../../core/models/table-data.model';
+import { TableDataService } from '@core/services/table-data.service';
+import { TableQueryDto } from '@core/models/table-data.interface';
 
 @Component({
     selector: 'app-generic-table',

@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { SectionService } from '../../../core/services/section.service';
-import { Section } from '../../../core/models/section.interface';
+import { SectionService } from '@core/services/section.service';
+import { Section } from '@core/models/section.interface';
 
 @Component({
     selector: 'app-sections',

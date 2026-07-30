@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CategoryService } from '../../../core/services/category.service';
-import { Category } from '../../../core/models/category.interface';
+import { CategoryService } from '@core/services/category.service';
+import { Category } from '@core/models/category.interface';
 
 @Component({
     selector: 'app-categories',

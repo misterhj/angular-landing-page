@@ -1,8 +1,8 @@
 import { Component, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser, CommonModule } from '@angular/common';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { SidebarComponent } from '../../shared/components/sidebar/sidebar.component';
-import { AuthService } from '../../core/services/auth.service';
+import { SidebarComponent } from '@shared/components/sidebar/sidebar.component';
+import { AuthService } from '@core/services/auth.service';
 import { filter } from 'rxjs';
 
 @Component({

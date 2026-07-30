@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { TableQueryDto, PagedResultDto } from '../models/table-data.model';
+import { environment } from '@env/environment';
+import { TableQueryDto, PagedResultDto } from '@core/models/table-data.interface';
 
 @Injectable({
     providedIn: 'root'

@@ -1,10 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BrandService } from '../../../core/services/brand.service';
-import { ModelService } from '../../../core/services/model.service';
-import { Brand } from '../../../core/models/brand.interface';
-import { Model } from '../../../core/models/model.interface';
+import { BrandService } from '@core/services/brand.service';
+import { ModelService } from '@core/services/model.service';
+import { Brand } from '@core/models/brand.interface';
+import { Model } from '@core/models/model.interface';
 
 @Component({
     selector: 'app-brands',
