@@ -1,95 +1,57 @@
-import { Component, ViewChild, TemplateRef, OnInit } from '@angular/core';
+import { Component, ViewChild, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ColumnDef } from '@tanstack/angular-table';
 
-import { GenericTableComponent } from '../../../shared/components/generic-table/generic-table.component';
-import { Product } from '../../../core/models/product.interface';
+import { ProductTableComponent } from './components/product-table/product-table.component';
+import { ProductModalComponent } from './components/product-modal/product-modal.component';
+import { Product } from '@core/models/product.interface';
 
 @Component({
-	selector: 'app-products',
-	standalone: true,
-	imports: [CommonModule, GenericTableComponent],
-	templateUrl: './products.component.html'
+  selector: 'app-products',
+  standalone: true,
+  imports: [CommonModule, ProductTableComponent, ProductModalComponent],
+  templateUrl: './products.component.html'
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent {
 
-	// Referencia a la tabla genérica para llamar a reload() cuando sea necesario
-	@ViewChild(GenericTableComponent) genericTable!: GenericTableComponent<Product>;
+  @ViewChild(ProductTableComponent) productTable!: ProductTableComponent;
 
-	// Referencias a plantillas de celdas personalizadas
-	@ViewChild('productCell', { static: true }) productCell!: TemplateRef<any>;
-	@ViewChild('categoryCell', { static: true }) categoryCell!: TemplateRef<any>;
-	@ViewChild('priceCell', { static: true }) priceCell!: TemplateRef<any>;
-	@ViewChild('actionsCell', { static: true }) actionsCell!: TemplateRef<any>;
+  // Estados orchestrados
+  isModalOpen = signal<boolean>(false);
+  selectedProduct = signal<Product | null>(null);
 
-	columns: ColumnDef<Product>[] = [];
-	customTemplates: Record<string, TemplateRef<any>> = {};
+  handleCreate(): void {
+    this.selectedProduct.set(null);
+    this.isModalOpen.set(true);
+  }
 
-	ngOnInit(): void {
-		this.columns = [
-			{
-				id: 'actions',
-				header: 'Acciones',
-				enableSorting: false,
-				enableColumnFilter: false
-			},
-			{
-				accessorKey: 'id',
-				header: 'ID',
-				enableSorting: true,
-				enableColumnFilter: true
-			},
-			{
-				accessorKey: 'name',
-				header: 'Producto',
-				enableSorting: true,
-				enableColumnFilter: true
-			},
-			{
-				accessorKey: 'category',
-				header: 'Categoría',
-				enableSorting: true,
-				enableColumnFilter: true
-			},
-			{
-				accessorKey: 'brand',
-				header: 'Marca',
-				enableSorting: true,
-				enableColumnFilter: true
-			},
-			{
-				accessorKey: 'price',
-				header: 'Precio',
-				enableSorting: true,
-				enableColumnFilter: false
-			}
-		];
+  handleEdit(product: Product): void {
+    this.selectedProduct.set(product);
+    this.isModalOpen.set(true);
+  }
 
-		this.customTemplates = {
-			actions: this.actionsCell,
-			name: this.productCell,
-			category: this.categoryCell,
-			price: this.priceCell
-		};
-	}
+  handleCloseModal(): void {
+    this.isModalOpen.set(false);
+  }
 
-	onCreateProduct(): void {
-		console.log('Abrir formulario/modal de nuevo producto');
-	}
+  handleSave(productData: any): void {
+    console.log('Guardando en Backend:', productData);
 
-	// Métodos de acción
-	onEditProduct(product: Product): void {
-		console.log('Editar producto:', product);
-		// Tu lógica de abrir el modal de edición
-	}
+    // TODO: Invocar servicio backend de productos
+    // this.productService.save(productData).subscribe(() => {
+    //   this.isModalOpen.set(false);
+    //   this.productTable.reload();
+    // });
 
-	onDeleteProduct(product: Product): void {
-		if (confirm(`¿Estás seguro de eliminar el producto "${product.name}"?`)) {
-			// Llamas a tu ProductService para eliminarlo
-			// Y al finalizar con éxito, refrescas la tabla:
-			// this.productService.delete(product.id).subscribe(() => {
-			//    this.genericTable.reload();
-			// });
-		}
-	}
+    this.isModalOpen.set(false);
+    if (this.productTable) {
+      this.productTable.reload();
+    }
+  }
+
+  handleDelete(product: Product): void {
+    if (confirm(`¿Estás seguro de eliminar el producto "${product.name}"?`)) {
+      // TODO: Invocar servicio backend de eliminación
+      // this.productService.delete(product.id).subscribe(() => this.productTable.reload());
+    }
+  }
 }
