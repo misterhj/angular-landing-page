@@ -1,0 +1,156 @@
+<div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+  
+  <!-- BARRA SUPERIOR (Título de la Tabla) -->
+  <div *ngIf="title" class="px-5 py-4 border-b border-slate-800 bg-slate-950/30">
+    <h2 class="text-base font-semibold text-white tracking-wide">{{ title }}</h2>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-left text-sm text-slate-300">
+      
+      <!-- CABECERA DE LA TABLA -->
+      <thead class="bg-slate-950/50 text-xs uppercase text-slate-400 border-b border-slate-800 font-semibold">
+        <tr *ngFor="let headerGroup of table.getHeaderGroups()">
+          <th *ngFor="let header of headerGroup.headers" class="p-3">
+            
+            <!-- CASO 1: COLUMNA DE ACCIONES (Lleva el Botón '+' integrado) -->
+            <ng-container *ngIf="header.column.id === 'actions'; else standardHeader">
+              <div class="flex items-center gap-2">
+                
+                <!-- Botón de Agregar Registro -->
+                <button 
+                  *ngIf="showAddButton"
+                  (click)="addClicked.emit()"
+                  type="button"
+                  class="p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition shadow-md flex items-center justify-center cursor-pointer active:scale-95"
+                  title="Agregar nuevo registro">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+
+              </div>
+            </ng-container>
+
+            <!-- CASO 2: CABECERA ESTÁNDAR PARA OTRAS COLUMNAS -->
+            <ng-template #standardHeader>
+              <!-- Título & Ordenamiento -->
+              <div 
+                [class.cursor-pointer]="header.column.getCanSort()"
+                (click)="header.column.getToggleSortingHandler()?.($event)"
+                class="flex items-center justify-between gap-2 select-none hover:text-white transition">
+                
+                <ng-container *flexRender="header.column.columnDef.header; props: header.getContext(); let headerText">
+                  <span>{{ headerText }}</span>
+                </ng-container>
+
+                <span *ngIf="header.column.getCanSort()" class="text-[10px] text-slate-500">
+                  {{ header.column.getIsSorted() === 'asc' ? '▲' : header.column.getIsSorted() === 'desc' ? '▼' : '⇅' }}
+                </span>
+              </div>
+
+              <!-- Filtro por Columna -->
+              <div *ngIf="header.column.getCanFilter()" class="mt-2">
+                <input 
+                  type="text"
+                  [value]="(header.column.getFilterValue() ?? '')"
+                  (input)="updateColumnFilter(header.column.id, $event)"
+                  placeholder="Filtrar..."
+                  class="w-full px-2 py-1 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600 font-normal"
+                />
+              </div>
+            </ng-template>
+
+          </th>
+        </tr>
+      </thead>
+
+      <!-- CUERPO DE LA TABLA -->
+      <tbody class="divide-y divide-slate-800/60">
+        
+        <!-- Estado de Carga -->
+        <tr *ngIf="isLoading()">
+          <td [attr.colspan]="columns.length" class="p-8 text-center text-slate-500">
+            Cargando registros...
+          </td>
+        </tr>
+
+        <!-- Sin Resultados -->
+        <tr *ngIf="!isLoading() && data().length === 0">
+          <td [attr.colspan]="columns.length" class="p-8 text-center text-slate-500">
+            No se encontraron registros con los criterios de búsqueda.
+          </td>
+        </tr>
+
+        <!-- Filas de Datos -->
+        <tr *ngFor="let row of table.getRowModel().rows" class="hover:bg-slate-800/40 transition">
+          <td *ngFor="let cell of row.getVisibleCells()" class="p-4">
+            
+            <ng-container *ngIf="customTemplates[cell.column.id]; else defaultCell">
+              <ng-container 
+                *ngTemplateOutlet="customTemplates[cell.column.id]; context: { $implicit: row.original }">
+              </ng-container>
+            </ng-container>
+
+            <ng-template #defaultCell>
+              <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellText">
+                {{ cellText }}
+              </ng-container>
+            </ng-template>
+
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- CONTROLES DE PAGINACIÓN -->
+  <div class="p-4 bg-slate-950/30 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
+    <div class="flex items-center gap-2">
+      <span>Mostrar</span>
+      <select 
+        [ngModel]="table.getState().pagination.pageSize" 
+        (ngModelChange)="table.setPageSize($event)"
+        class="bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white focus:outline-none">
+        <option [value]="5">5</option>
+        <option [value]="10">10</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+      <span>de <strong>{{ totalCount() }}</strong> coincidencias</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        (click)="table.setPageIndex(0)" 
+        [disabled]="!table.getCanPreviousPage()"
+        class="px-2 py-1 bg-slate-800 border border-slate-700 rounded disabled:opacity-30 hover:bg-slate-700 transition">
+        «
+      </button>
+      <button 
+        (click)="table.previousPage()" 
+        [disabled]="!table.getCanPreviousPage()"
+        class="px-2 py-1 bg-slate-800 border border-slate-700 rounded disabled:opacity-30 hover:bg-slate-700 transition">
+        Anterior
+      </button>
+
+      <span>
+        Página <strong>{{ table.getState().pagination.pageIndex + 1 }}</strong> de <strong>{{ table.getPageCount() }}</strong>
+      </span>
+
+      <button 
+        (click)="table.nextPage()" 
+        [disabled]="!table.getCanNextPage()"
+        class="px-2 py-1 bg-slate-800 border border-slate-700 rounded disabled:opacity-30 hover:bg-slate-700 transition">
+        Siguiente
+      </button>
+      <button 
+        (click)="table.setPageIndex(table.getPageCount() - 1)" 
+        [disabled]="!table.getCanNextPage()"
+        class="px-2 py-1 bg-slate-800 border border-slate-700 rounded disabled:opacity-30 hover:bg-slate-700 transition">
+        »
+      </button>
+    </div>
+  </div>
+</div>
