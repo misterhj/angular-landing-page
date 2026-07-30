@@ -39,6 +39,7 @@
 			<table class="w-full text-left text-sm text-slate-300">
 				<thead class="bg-slate-950/50 text-xs uppercase text-slate-400 border-b border-slate-800 font-semibold">
 					<tr>
+						<th class="p-4 w-16 text-slate-500">ID</th>
 						<th class="p-4">Producto</th>
 						<th class="p-4">Categoría / Subcat</th>
 						<th class="p-4">Marca & Modelo</th>
@@ -49,6 +50,13 @@
 				</thead>
 				<tbody class="divide-y divide-slate-800/60">
 					<tr *ngFor="let product of filteredProducts()" class="hover:bg-slate-800/40 transition group">
+						
+						<!-- Columna ID -->
+						<td class="p-4 text-xs font-mono font-medium text-slate-500 whitespace-nowrap">
+							#{{ product.id }}
+						</td>
+
+						<!-- Columna Producto -->
 						<td class="p-4 flex items-center gap-3">
 							<div class="w-10 h-10 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex-shrink-0 flex items-center justify-center">
 								<img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" (error)="onImgError(product)" class="w-full h-full object-cover" />
