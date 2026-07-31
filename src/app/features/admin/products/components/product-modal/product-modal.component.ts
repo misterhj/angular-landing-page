@@ -1,18 +1,24 @@
-import { Component, OnInit, inject, signal, input, output, effect, HostListener } from '@angular/core';
+import { Component, OnInit, inject, signal, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Product } from '@core/models/product.interface';
 
+// 👈 1. Importar ModalComponent (ajusta la ruta según tu estructura)
+import { ModalComponent } from '@shared/components/modal/modal.component';
+
 @Component({
 	selector: 'app-product-modal',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule],
+	imports: [
+		CommonModule,
+		ReactiveFormsModule,
+		ModalComponent // 👈 2. Agregar ModalComponent aquí
+	],
 	templateUrl: './product-modal.component.html'
 })
 export class ProductModalComponent implements OnInit {
 	private fb = inject(FormBuilder);
 
-	// Inputs y Outputs con la API moderna de Signals de Angular
 	isOpen = input<boolean>(false);
 	productToEdit = input<Product | null>(null);
 
@@ -21,7 +27,6 @@ export class ProductModalComponent implements OnInit {
 
 	isSaving = signal<boolean>(false);
 
-	// Listas de opciones para los selectores
 	sectionsList = signal<string[]>(['Electrónica y Tecnología', 'Hogar y Electrodomésticos', 'Accesorios']);
 	categoriesList = signal<string[]>(['televisores-y-audio', 'celulares-y-tablets', 'informática']);
 	subcategoriesList = signal<string[]>(['Smart TV', 'Radio Portátil', 'Media Player', 'Audio']);
@@ -42,7 +47,6 @@ export class ProductModalComponent implements OnInit {
 	});
 
 	constructor() {
-		// Reacciona cuando cambia el producto a editar
 		effect(() => {
 			const prod = this.productToEdit();
 			if (prod) {
@@ -68,13 +72,6 @@ export class ProductModalComponent implements OnInit {
 
 	close(): void {
 		this.onClose.emit();
-	}
-
-	@HostListener('window:keydown.escape', ['$event'])
-	handleEscapeKey(event: Event): void {
-		if (this.isOpen() && !this.isSaving()) {
-			this.close();
-		}
 	}
 
 	submitForm(): void {
