@@ -25,7 +25,6 @@ export class ProductModalComponent implements OnInit {
 
 	isSaving = signal<boolean>(false);
 
-	// 👈 Control de error al cargar la previsualización de la imagen
 	hasImageError = false;
 
 	sectionsList = signal<string[]>(['Electrónica y Tecnología', 'Hogar y Electrodomésticos', 'Accesorios']);
@@ -34,15 +33,16 @@ export class ProductModalComponent implements OnInit {
 	brandsList = signal<string[]>(['Samsung', 'Xion', 'Amazon', 'Win', 'LG']);
 	modelsList = signal<string[]>(['XI-RA28BT', 'XI-RA12', 'Fire TV Stick 4K', 'UN43CU7090GXPR']);
 
+	// 👈 Únicamente 'name' tiene 'Validators.required'
 	productForm: FormGroup = this.fb.group({
 		id: [null],
 		name: ['', [Validators.required, Validators.minLength(3)]],
-		section: ['', Validators.required],
-		category: ['', Validators.required],
+		section: [''],
+		category: [''],
 		subcategory: [''],
 		brand: [''],
 		model: [''],
-		price: [0, [Validators.required, Validators.min(0)]],
+		price: [0, [Validators.min(0)]],
 		imageUrl: [''],
 		description: ['']
 	});
@@ -50,7 +50,7 @@ export class ProductModalComponent implements OnInit {
 	constructor() {
 		effect(() => {
 			const prod = this.productToEdit();
-			this.hasImageError = false; // Resetear error al cambiar de producto
+			this.hasImageError = false;
 
 			if (prod) {
 				this.productForm.patchValue({
@@ -61,7 +61,7 @@ export class ProductModalComponent implements OnInit {
 					subcategory: (prod as any).subcategory || '',
 					brand: prod.brand || '',
 					model: (prod as any).model || '',
-					price: prod.price,
+					price: prod.price ?? 0,
 					imageUrl: prod.imageUrl || '',
 					description: prod.description || ''
 				});

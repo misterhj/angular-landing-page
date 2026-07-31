@@ -19,7 +19,7 @@ import { ProductService } from '@core/services/product.service';
 	templateUrl: './products.component.html'
 })
 export class ProductsComponent {
-	private productService = inject(ProductService); // 👈 Inyección del servicio
+	private productService = inject(ProductService);
 
 	@ViewChild(ProductTableComponent) productTable!: ProductTableComponent;
 
@@ -32,7 +32,6 @@ export class ProductsComponent {
 	isDeleting = signal<boolean>(false);
 	productToDelete = signal<Product | null>(null);
 
-	// Mensaje dinámico para el modal
 	deleteMessage = computed(() => {
 		const prod = this.productToDelete();
 		return prod ? `¿Estás seguro de que deseas eliminar el producto "${prod.name}"?` : '';
@@ -52,13 +51,24 @@ export class ProductsComponent {
 		this.isModalOpen.set(false);
 	}
 
-	// 👈 Conexión HTTP Guardar (POST / PUT)
+	// 👈 Conexión HTTP Guardar limpiando el payload
 	handleSave(productData: any): void {
 		const isEdit = !!productData.id;
+		const payload = { ...productData };
+
+		// Si es creación, eliminamos la propiedad 'id' para evitar enviar "id: null" a C#
+		if (!isEdit) {
+			delete payload.id;
+		}
+
+		// Aseguramos que el precio vaya como número
+		if (payload.price !== undefined && payload.price !== null) {
+			payload.price = Number(payload.price);
+		}
 
 		const request$ = isEdit
-			? this.productService.updateProduct(productData.id, productData)
-			: this.productService.createProduct(productData);
+			? this.productService.updateProduct(payload.id, payload)
+			: this.productService.createProduct(payload);
 
 		request$.subscribe({
 			next: () => {
@@ -67,7 +77,9 @@ export class ProductsComponent {
 					this.productTable.reload();
 				}
 			},
-			error: (err) => console.error('Error al guardar producto:', err)
+			error: (err) => {
+				console.error('Error al guardar producto en C#:', err);
+			}
 		});
 	}
 
@@ -76,12 +88,9 @@ export class ProductsComponent {
 		this.isDeleteModalOpen.set(true);
 	}
 
-	// 👈 Conexión HTTP Eliminar (DELETE)
-// Conexión HTTP Eliminar (DELETE)
 	handleConfirmDelete(): void {
 		const prod = this.productToDelete();
 		
-		// 👈 Agregamos la validación de prod.id
 		if (!prod || prod.id === undefined) return;
 
 		this.isDeleting.set(true);

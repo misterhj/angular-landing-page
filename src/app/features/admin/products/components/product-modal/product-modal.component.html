@@ -8,7 +8,7 @@
 
   <form [formGroup]="productForm" (ngSubmit)="submitForm()" class="space-y-4">
     
-    <!-- Nombre del Producto -->
+    <!-- Nombre del Producto (Único campo obligatorio) -->
     <div>
       <label class="block text-xs font-medium text-slate-300 mb-1">Nombre del Producto *</label>
       <input 
@@ -17,24 +17,24 @@
         placeholder="Ej: Smart TV Samsung 50 pulgadas"
         class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
       <span *ngIf="productForm.get('name')?.touched && productForm.get('name')?.invalid" class="text-[11px] text-red-400 mt-1 block">
-        El nombre es obligatorio.
+        El nombre es obligatorio (mínimo 3 caracteres).
       </span>
     </div>
 
     <!-- Sección, Categoría y Subcategoría -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div>
-        <label class="block text-xs font-medium text-slate-300 mb-1">Sección *</label>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Sección</label>
         <select formControlName="section" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition cursor-pointer">
-          <option value="" disabled>Seleccionar...</option>
+          <option value="">Seleccionar...</option>
           <option *ngFor="let sec of sectionsList()" [value]="sec">{{ sec }}</option>
         </select>
       </div>
 
       <div>
-        <label class="block text-xs font-medium text-slate-300 mb-1">Categoría *</label>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Categoría</label>
         <select formControlName="category" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition cursor-pointer">
-          <option value="" disabled>Seleccionar...</option>
+          <option value="">Seleccionar...</option>
           <option *ngFor="let cat of categoriesList()" [value]="cat">{{ cat }}</option>
         </select>
       </div>
@@ -67,10 +67,10 @@
       </div>
     </div>
 
-<!-- Precio e Imagen con Previsualización -->
+    <!-- Precio e Imagen con Previsualización -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
       <div>
-        <label class="block text-xs font-medium text-slate-300 mb-1">Precio (Gs.) *</label>
+        <label class="block text-xs font-medium text-slate-300 mb-1">Precio (Gs.)</label>
         <input 
           type="number" 
           formControlName="price" 
@@ -80,7 +80,6 @@
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-1">URL Imagen</label>
         <div class="flex gap-2 items-center">
-          <!-- Campo Input -->
           <input 
             type="text" 
             formControlName="imageUrl" 
@@ -88,7 +87,6 @@
             placeholder="https://..." 
             class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
           
-          <!-- Miniatura / Previsualización -->
           <div class="w-10 h-10 min-w-[2.5rem] rounded-lg border border-slate-700 bg-slate-950 overflow-hidden flex items-center justify-center shrink-0 relative group">
             <img 
               *ngIf="productForm.get('imageUrl')?.value && !hasImageError" 
@@ -97,7 +95,6 @@
               alt="Preview" 
               class="w-full h-full object-cover" />
             
-            <!-- Placeholder si no hay imagen o la URL da error -->
             <svg 
               *ngIf="!productForm.get('imageUrl')?.value || hasImageError" 
               class="w-5 h-5 text-slate-500" 
@@ -122,7 +119,10 @@
       <button type="button" (click)="close()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white bg-slate-800 rounded-lg transition cursor-pointer">
         Cancelar
       </button>
-      <button type="submit" class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition shadow cursor-pointer">
+      <button 
+        type="submit" 
+        [disabled]="productForm.invalid"
+        class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition shadow cursor-pointer">
         Guardar Cambios
       </button>
     </div>
