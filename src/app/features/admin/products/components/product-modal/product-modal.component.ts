@@ -44,14 +44,14 @@ export class ProductModalComponent implements OnInit {
 	isSaving = signal<boolean>(false);
 	hasImageError = false;
 
-	// Listas dinámicas
+	// Listas dinámicas con señales
 	sectionsList = signal<Section[]>([]);
 	categoriesList = signal<Category[]>([]);
 	subcategoriesList = signal<Subcategory[]>([]);
 	brandsList = signal<Brand[]>([]);
 	modelsList = signal<Model[]>([]);
 
-	// Formulario vinculado a las claves foráneas (IDs)
+	// Formulario vinculado a los IDs
 	productForm: FormGroup = this.fb.group({
 		id: [null],
 		name: ['', [Validators.required, Validators.minLength(3)]],
@@ -66,12 +66,17 @@ export class ProductModalComponent implements OnInit {
 	});
 
 	constructor() {
-		// 1. Escuchar cuando el usuario seleccione una categoría en el desplegable
+		// Escuchar cambios en Categoría para actualizar Subcategorías
 		this.productForm.get('categoryId')?.valueChanges.subscribe((catId) => {
 			this.updateSubcategoriesList(catId);
 		});
 
-		// 2. Detectar aperturas o cambios de producto (al abrir el modal de edición)
+		// Escuchar cambios en Marca para actualizar Modelos
+		this.productForm.get('brandId')?.valueChanges.subscribe((brandId) => {
+			this.updateModelsList(brandId);
+		});
+
+		// Detectar aperturas o cambios en el producto recibido para edición
 		effect(() => {
 			const prod = this.productToEdit();
 			const open = this.isOpen();
@@ -83,6 +88,7 @@ export class ProductModalComponent implements OnInit {
 
 			if (prod) {
 				const catId = prod.categoryId ?? prod.category?.id ?? null;
+				const brandId = prod.brandId ?? prod.brand?.id ?? null;
 
 				this.productForm.patchValue({
 					id: prod.id ?? null,
@@ -90,15 +96,16 @@ export class ProductModalComponent implements OnInit {
 					sectionId: prod.sectionId ?? prod.section?.id ?? null,
 					categoryId: catId,
 					subcategoryId: prod.subcategoryId ?? prod.subcategory?.id ?? null,
-					brandId: prod.brandId ?? prod.brand?.id ?? null,
+					brandId: brandId,
 					modelId: prod.modelId ?? prod.model?.id ?? null,
 					price: prod.price ?? 0,
 					imageUrl: prod.imageUrl ?? '',
 					description: prod.description ?? ''
 				});
 
-				// Actualizar subcategorías inmediatamente por si las categorías ya estaban cargadas
+				// Sincronizar listas secundarias
 				this.updateSubcategoriesList(catId);
+				this.updateModelsList(brandId);
 			} else {
 				this.productForm.reset({
 					id: null,
@@ -113,6 +120,7 @@ export class ProductModalComponent implements OnInit {
 					description: ''
 				});
 				this.subcategoriesList.set([]);
+				this.modelsList.set([]);
 			}
 		});
 	}
@@ -121,6 +129,7 @@ export class ProductModalComponent implements OnInit {
 		this.loadCatalogs();
 	}
 
+	// Carga los catálogos principales desde el backend
 	private loadCatalogs(): void {
 		this.sectionService.getSections().subscribe({
 			next: (data) => this.sectionsList.set(data),
@@ -130,7 +139,6 @@ export class ProductModalComponent implements OnInit {
 		this.categoryService.getCategories().subscribe({
 			next: (data) => {
 				this.categoriesList.set(data);
-				// Al recibir las categorías de la API, buscar si ya había una categoría preseleccionada
 				const currentCatId = this.productForm.get('categoryId')?.value;
 				if (currentCatId) {
 					this.updateSubcategoriesList(currentCatId);
@@ -138,25 +146,53 @@ export class ProductModalComponent implements OnInit {
 			},
 			error: (err) => console.error('Error al cargar categorías:', err)
 		});
+
+		this.brandService.getBrands().subscribe({
+			next: (data) => {
+				this.brandsList.set(data);
+				const currentBrandId = this.productForm.get('brandId')?.value;
+				if (currentBrandId) {
+					this.updateModelsList(currentBrandId);
+				}
+			},
+			error: (err) => console.error('Error al cargar marcas:', err)
+		});
 	}
 
-	// Extrae las subcategorías en memoria asociadas al ID de la categoría
+	// Extrae las subcategorías en memoria
 	private updateSubcategoriesList(categoryId: number | string | null): void {
 		if (!categoryId) {
 			this.subcategoriesList.set([]);
 			return;
 		}
 
-		const catIdNum = Number(categoryId);
-		const selectedCat = this.categoriesList().find(c => Number(c.id) === catIdNum);
+		const selectedCat = this.categoriesList().find(c => Number(c.id) === Number(categoryId));
 		const subs = selectedCat?.subcategories || [];
 
 		this.subcategoriesList.set(subs as Subcategory[]);
 
-		// Si el usuario cambió de categoría y la subcategoría seleccionada no pertenece a la nueva lista, la deselecciona
 		const currentSubId = this.productForm.get('subcategoryId')?.value;
 		if (currentSubId && !subs.some(s => Number(s.id) === Number(currentSubId))) {
 			this.productForm.patchValue({ subcategoryId: null }, { emitEvent: false });
+		}
+	}
+
+	// Extrae los modelos en memoria de la marca seleccionada
+	private updateModelsList(brandId: number | string | null): void {
+		if (!brandId) {
+			this.modelsList.set([]);
+			return;
+		}
+
+		const selectedBrand = this.brandsList().find(b => Number(b.id) === Number(brandId));
+		const models = selectedBrand?.models || [];
+
+		this.modelsList.set(models);
+
+		// Si el usuario cambia la marca y el modelo seleccionado no pertenece a la nueva marca, lo blanquea
+		const currentModelId = this.productForm.get('modelId')?.value;
+		if (currentModelId && !models.some(m => Number(m.id) === Number(currentModelId))) {
+			this.productForm.patchValue({ modelId: null }, { emitEvent: false });
 		}
 	}
 

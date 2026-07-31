@@ -28,37 +28,27 @@
 
 <!-- SECCIÓN -->
 <ng-template #sectionCell let-product>
-  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-950/60 text-purple-300 border border-purple-800/50 whitespace-nowrap">
-    {{ product.section?.name || product.section || '-' }}
-  </span>
+    {{ product.section?.name || product.section || '' }}
 </ng-template>
 
 <!-- CATEGORÍA -->
 <ng-template #categoryCell let-product>
-  <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-blue-950/60 text-blue-400 border border-blue-800/50 whitespace-nowrap">
-    {{ product.category?.name || product.category || '-' }}
-  </span>
+    {{ product.category?.name || product.category || '' }}
 </ng-template>
 
 <!-- SUBCATEGORÍA -->
 <ng-template #subcategoryCell let-product>
-  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cyan-950/60 text-cyan-300 border border-cyan-800/50 whitespace-nowrap">
-    {{ product.subcategory?.name || product.subcategory || '-' }}
-  </span>
+    {{ product.subcategory?.name || product.subcategory || '' }}
 </ng-template>
 
 <!-- MARCA -->
 <ng-template #brandCell let-product>
-  <span class="text-slate-300 text-xs font-medium whitespace-nowrap">
-    {{ product.brand?.name || product.brand || '-' }}
-  </span>
+    {{ product.brand?.name || product.brand || '' }}
 </ng-template>
 
 <!-- MODELO -->
 <ng-template #modelCell let-product>
-  <span class="text-slate-400 text-xs whitespace-nowrap">
-    {{ product.model?.name || product.model || '-' }}
-  </span>
+    {{ product.model?.name || product.model || '' }}
 </ng-template>
 
 <!-- PRECIO -->
