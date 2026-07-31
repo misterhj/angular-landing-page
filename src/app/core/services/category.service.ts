@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Category } from '../models/category.interface';
+import { CategoryModalPayload } from '@features/admin/categories/category-modal.component';
 import { environment } from '@env/environment';
 
 @Injectable({
@@ -15,11 +16,11 @@ export class CategoryService {
 		return this.http.get<Category[]>(this.API_URL);
 	}
 
-	createCategory(category: Partial<Category>): Observable<Category> {
+	createCategory(category: CategoryModalPayload | Partial<Category>): Observable<Category> {
 		return this.http.post<Category>(this.API_URL, category);
 	}
 
-	updateCategory(id: number, category: Partial<Category>): Observable<Category> {
+	updateCategory(id: number, category: CategoryModalPayload | Partial<Category>): Observable<Category> {
 		return this.http.put<Category>(`${this.API_URL}/${id}`, category);
 	}
 

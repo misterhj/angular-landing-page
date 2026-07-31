@@ -15,21 +15,21 @@ import { Category, Subcategory } from '@core/models/category.interface';
 
 import { CategoryModalComponent, CategoryModalPayload } from './category-modal.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
-import { CategoryService } from '@core/services/category.service'; // 👈 Usamos CategoryService
+import { CategoryService } from '@core/services/category.service';
 
 @Component({
     selector: 'app-categories',
     standalone: true,
     imports: [
-        CommonModule, 
-        GenericTableComponent, 
+        CommonModule,
+        GenericTableComponent,
         CategoryModalComponent,
         ConfirmModalComponent
     ],
     templateUrl: './categories.component.html'
 })
 export class CategoriesComponent implements OnInit, AfterViewInit {
-    private categoryService = inject(CategoryService); // 👈 Inyección
+    private categoryService = inject(CategoryService);
 
     @ViewChild('catTable') catTable!: GenericTableComponent;
     @ViewChild('subTable') subTable!: GenericTableComponent;
@@ -104,14 +104,17 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
 
     onEditItem(item: Category | Subcategory): void {
         this.editingItem.set(item);
-        
-        const isSub = 'categoryId' in item;
-        this.parentCategoryIdForModal.set(isSub ? (item as Subcategory).categoryId : null);
-        this.modalTitle.set(isSub ? 'Editar Subcategoría' : 'Editar Categoría Principal');
+
+        // 👈 Detectamos si es subcategoría leyendo 'categoryId' o 'parentCategoryId'
+        const parentId = 'categoryId' in item
+            ? (item as Subcategory).categoryId
+            : (item as any).parentCategoryId ?? null;
+
+        this.parentCategoryIdForModal.set(parentId);
+        this.modalTitle.set(parentId ? 'Editar Subcategoría' : 'Editar Categoría Principal');
         this.isModalOpen.set(true);
     }
 
-    // 👈 Conexión HTTP Guardar (POST / PUT)
     onSaveItem(payload: CategoryModalPayload): void {
         this.isSaving.set(true);
 
@@ -139,7 +142,6 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
         this.isDeleteModalOpen.set(true);
     }
 
-    // 👈 Conexión HTTP Eliminar (DELETE)
     onConfirmDelete(): void {
         const item = this.itemToDelete();
         if (!item) return;
@@ -150,12 +152,12 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
             next: () => {
                 this.isDeleting.set(false);
                 this.isDeleteModalOpen.set(false);
-                this.itemToDelete.set(null);
 
                 if (this.selectedCategory()?.id === item.id && !('categoryId' in item)) {
                     this.selectedCategory.set(null);
                 }
 
+                this.itemToDelete.set(null);
                 this.refreshTables();
             },
             error: (err) => {
@@ -168,9 +170,9 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
     deleteMessage = computed(() => {
         const item = this.itemToDelete();
         if (!item) return '';
-        const isSub = 'categoryId' in item;
-        return isSub 
-            ? `¿Estás seguro de que deseas eliminar la subcategoría "${item.name}"?` 
+        const isSub = 'categoryId' in item || !!(item as any).parentCategoryId;
+        return isSub
+            ? `¿Estás seguro de que deseas eliminar la subcategoría "${item.name}"?`
             : `¿Estás seguro de que deseas eliminar "${item.name}"? Se pueden ver afectadas sus subcategorías asociadas.`;
     });
 
