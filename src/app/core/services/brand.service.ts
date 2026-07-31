@@ -9,7 +9,7 @@ import { environment } from '@env/environment';
 })
 export class BrandService {
     private http = inject(HttpClient);
-    private API_URL = `${environment.apiUrl}/auth`;
+    private API_URL = `${environment.apiUrl}/brands`;
 
     getBrands(): Observable<Brand[]> {
         return this.http.get<Brand[]>(this.API_URL);
@@ -17,6 +17,10 @@ export class BrandService {
 
     createBrand(brand: Partial<Brand>): Observable<Brand> {
         return this.http.post<Brand>(this.API_URL, brand);
+    }
+
+    updateBrand(id: number, brand: Partial<Brand>): Observable<Brand> {
+        return this.http.put<Brand>(`${this.API_URL}/${id}`, brand);
     }
 
     deleteBrand(id: number): Observable<void> {

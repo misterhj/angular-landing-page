@@ -1,38 +1,36 @@
 <div class="p-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-  <!-- TABLA 1: CATEGORÍAS PRINCIPALES -->
-  <div>
-    <app-generic-table
-      #catTable
-      procedure="GET_CATEGORIES"
-      title="CATEGORÍAS PRINCIPALES"
-      [columns]="catColumns"
-      [customTemplates]="catTemplates()" 
-      (rowClick)="onSelectCategory($event)"
-      (addClicked)="onAddCategory()">
-    </app-generic-table>
-  </div>
+	<!-- TABLA 1: CATEGORÍAS PRINCIPALES -->
+	<app-generic-table
+		#catTable
+		procedure="GET_CATEGORIES"
+		title="CATEGORÍAS PRINCIPALES"
+		[columns]="catColumns"
+		[customTemplates]="catTemplates()" 
+		(rowClick)="onSelectCategory($event)"
+		(addClicked)="onAddCategory()">
+	</app-generic-table>
 
-  <!-- TABLA 2: SUBCATEGORÍAS -->
-  <div>
-    <ng-container *ngIf="selectedCategory(); else selectPrompt">
-      <app-generic-table
-        #subTable
-        procedure="GET_SUBCATEGORIES"
-        [title]="'SUBCATEGORÍAS DE ' + selectedCategory()?.name"
-        [columns]="subColumns"
-        [customTemplates]="subTemplates()"
-        [defaultFilters]="subFilters()"
-        (addClicked)="onAddSubcategory()">
-      </app-generic-table>
-    </ng-container>
 
-    <ng-template #selectPrompt>
-      <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center min-h-[300px]">
-        Selecciona una categoría de la tabla izquierda para gestionar sus subcategorías.
-      </div>
-    </ng-template>
-  </div>
+	<!-- TABLA 2: SUBCATEGORÍAS -->
+	<ng-container *ngIf="selectedCategory(); else selectPrompt">
+		<app-generic-table
+		#subTable
+		procedure="GET_SUBCATEGORIES"
+		[title]="'SUBCATEGORÍAS DE ' + selectedCategory()?.name"
+		[columns]="subColumns"
+		[customTemplates]="subTemplates()"
+		[defaultFilters]="subFilters()"
+		(addClicked)="onAddSubcategory()">
+		</app-generic-table>
+	</ng-container>
+
+	<ng-template #selectPrompt>
+		<div class="bg-slate-900/50 border border-slate-800 rounded-xl p-12 text-center text-slate-500 text-xs flex flex-col items-center justify-center min-h-[300px]">
+		Selecciona una categoría de la tabla izquierda para gestionar sus subcategorías.
+		</div>
+	</ng-template>
+
 
 </div>
 

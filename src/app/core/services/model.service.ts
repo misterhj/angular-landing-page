@@ -9,7 +9,7 @@ import { environment } from '@env/environment';
 })
 export class ModelService {
     private http = inject(HttpClient);
-    private API_URL = `${environment.apiUrl}/auth`;
+    private API_URL = `${environment.apiUrl}/models`;
 
     getModels(brandId?: number): Observable<Model[]> {
         const url = brandId ? `${this.API_URL}?brandId=${brandId}` : this.API_URL;
@@ -18,6 +18,10 @@ export class ModelService {
 
     createModel(model: Partial<Model>): Observable<Model> {
         return this.http.post<Model>(this.API_URL, model);
+    }
+
+    updateModel(id: number, model: Partial<Model>): Observable<Model> {
+        return this.http.put<Model>(`${this.API_URL}/${id}`, model);
     }
 
     deleteModel(id: number): Observable<void> {
