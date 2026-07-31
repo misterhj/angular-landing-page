@@ -15,4 +15,14 @@
     (onSave)="handleSave($event)">
   </app-product-modal>
 
+  <!-- MODAL DE CONFIRMACIÓN DE ELIMINACIÓN -->
+  <app-confirm-modal
+    [isOpen]="isDeleteModalOpen()"
+    title="Eliminar Producto"
+    [message]="deleteMessage()"
+    [isLoading]="isDeleting()"
+    (cancel)="isDeleteModalOpen.set(false)"
+    (confirm)="handleConfirmDelete()">
+  </app-confirm-modal>
+
 </div>

@@ -6,7 +6,8 @@ import {
     TemplateRef,
     inject,
     signal,
-    effect
+    effect,
+    input
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -34,12 +35,17 @@ export class GenericTableComponent<T = any> {
 
     @Input({ required: true }) procedure!: string;
     @Input({ required: true }) columns: ColumnDef<T>[] = [];
-    @Input() customTemplates: Record<string, TemplateRef<any>> = {};
 
-    // Novedades para estandarizar la cabecera del contenedor:
+    // 👈 Cambiado a Input Signal
+    customTemplates = input<Record<string, TemplateRef<any>>>({});
+
     @Input() title: string = '';
     @Input() showAddButton: boolean = true;
+    
+    defaultFilters = input<Record<string, string | undefined>>({});
+
     @Output() addClicked = new EventEmitter<void>();
+    @Output() rowClick = new EventEmitter<T>();
 
     data = signal<T[]>([]);
     totalCount = signal<number>(0);
@@ -78,6 +84,14 @@ export class GenericTableComponent<T = any> {
         this.isLoading.set(true);
 
         const filterMap: Record<string, string> = {};
+
+        const rawDefaults = this.defaultFilters();
+        Object.entries(rawDefaults).forEach(([key, val]) => {
+            if (val !== undefined && val !== null && val !== '') {
+                filterMap[key] = val;
+            }
+        });
+
         this.columnFilters().forEach(f => {
             if (f.value !== undefined && f.value !== null && f.value !== '') {
                 filterMap[f.id] = String(f.value);

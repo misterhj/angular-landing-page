@@ -28,7 +28,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                   </svg>
                 </button>
-                <span>Acciones</span>
               </div>
             </ng-container>
 
@@ -82,22 +81,27 @@
         </tr>
 
         <!-- Filas de Datos -->
-        <tr *ngFor="let row of table.getRowModel().rows" class="hover:bg-slate-800/40 transition">
-          <td *ngFor="let cell of row.getVisibleCells()" class="px-3 py-2.5">
-            
-            <ng-container *ngIf="customTemplates[cell.column.id]; else defaultCell">
-              <ng-container 
-                *ngTemplateOutlet="customTemplates[cell.column.id]; context: { $implicit: row.original }">
-              </ng-container>
+        <tr
+			*ngFor="let row of table.getRowModel().rows"
+  			(click)="rowClick.emit(row.original)"
+  			class="hover:bg-slate-800/60 transition cursor-pointer select-none"
+			>
+        <td *ngFor="let cell of row.getVisibleCells()" class="px-3 py-2.5">
+          
+          <!-- 👈 Agregamos () a customTemplates -->
+          <ng-container *ngIf="customTemplates()[cell.column.id]; else defaultCell">
+            <ng-container 
+              *ngTemplateOutlet="customTemplates()[cell.column.id]; context: { $implicit: row.original }">
             </ng-container>
+          </ng-container>
 
-            <ng-template #defaultCell>
-              <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellText">
-                {{ cellText }}
-              </ng-container>
-            </ng-template>
+          <ng-template #defaultCell>
+            <ng-container *flexRender="cell.column.columnDef.cell; props: cell.getContext(); let cellText">
+              {{ cellText }}
+            </ng-container>
+          </ng-template>
 
-          </td>
+        </td>
         </tr>
 
       </tbody>
