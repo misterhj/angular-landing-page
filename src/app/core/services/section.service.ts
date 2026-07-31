@@ -5,21 +5,25 @@ import { Section } from '../models/section.interface';
 import { environment } from '@env/environment';
 
 @Injectable({
-  providedIn: 'root'
+	providedIn: 'root'
 })
 export class SectionService {
-  private http = inject(HttpClient);
-    private API_URL = `${environment.apiUrl}/auth`;
+	private http = inject(HttpClient);
+	private API_URL = `${environment.apiUrl}/sections`;
 
-  getSections(): Observable<Section[]> {
-    return this.http.get<Section[]>(this.API_URL);
-  }
+	getSections(): Observable<Section[]> {
+		return this.http.get<Section[]>(this.API_URL);
+	}
 
-  createSection(section: Partial<Section>): Observable<Section> {
-    return this.http.post<Section>(this.API_URL, section);
-  }
+	createSection(section: Partial<Section>): Observable<Section> {
+		return this.http.post<Section>(this.API_URL, section);
+	}
 
-  deleteSection(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.API_URL}/${id}`);
-  }
+	updateSection(id: number, section: Partial<Section>): Observable<Section> {
+		return this.http.put<Section>(`${this.API_URL}/${id}`, section);
+	}
+
+	deleteSection(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.API_URL}/${id}`);
+	}
 }
