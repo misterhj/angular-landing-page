@@ -2,8 +2,7 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
-  sectionId?: number;
-  subcategoriesCount?: number;
+  subcategories?: Subcategory[];
 }
 
 export interface Subcategory {

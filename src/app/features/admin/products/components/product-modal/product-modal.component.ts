@@ -1,8 +1,20 @@
 import { Component, OnInit, inject, signal, input, output, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
 import { Product } from '@core/models/product.interface';
+import { Section } from '@core/models/section.interface';
+import { Category, Subcategory } from '@core/models/category.interface';
+import { Brand } from '@core/models/brand.interface';
+import { Model } from '@core/models/model.interface';
+
+import { SectionService } from '@core/services/section.service';
+import { CategoryService } from '@core/services/category.service';
+import { BrandService } from '@core/services/brand.service';
+import { ModelService } from '@core/services/model.service';
+
 import { ModalComponent } from '@shared/components/modal/modal.component';
+import { SearchableSelectComponent } from '@shared/components/searchable-select/searchable-select.component';
 
 @Component({
 	selector: 'app-product-modal',
@@ -10,12 +22,18 @@ import { ModalComponent } from '@shared/components/modal/modal.component';
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
-		ModalComponent
+		ModalComponent,
+		SearchableSelectComponent
 	],
 	templateUrl: './product-modal.component.html'
 })
 export class ProductModalComponent implements OnInit {
 	private fb = inject(FormBuilder);
+
+	private sectionService = inject(SectionService);
+	private categoryService = inject(CategoryService);
+	private brandService = inject(BrandService);
+	private modelService = inject(ModelService);
 
 	isOpen = input<boolean>(false);
 	productToEdit = input<Product | null>(null);
@@ -24,54 +42,130 @@ export class ProductModalComponent implements OnInit {
 	onSave = output<any>();
 
 	isSaving = signal<boolean>(false);
-
 	hasImageError = false;
 
-	sectionsList = signal<string[]>(['Electrónica y Tecnología', 'Hogar y Electrodomésticos', 'Accesorios']);
-	categoriesList = signal<string[]>(['televisores-y-audio', 'celulares-y-tablets', 'informática']);
-	subcategoriesList = signal<string[]>(['Smart TV', 'Radio Portátil', 'Media Player', 'Audio']);
-	brandsList = signal<string[]>(['Samsung', 'Xion', 'Amazon', 'Win', 'LG']);
-	modelsList = signal<string[]>(['XI-RA28BT', 'XI-RA12', 'Fire TV Stick 4K', 'UN43CU7090GXPR']);
+	// Listas dinámicas
+	sectionsList = signal<Section[]>([]);
+	categoriesList = signal<Category[]>([]);
+	subcategoriesList = signal<Subcategory[]>([]);
+	brandsList = signal<Brand[]>([]);
+	modelsList = signal<Model[]>([]);
 
-	// 👈 Únicamente 'name' tiene 'Validators.required'
+	// Formulario vinculado a las claves foráneas (IDs)
 	productForm: FormGroup = this.fb.group({
 		id: [null],
 		name: ['', [Validators.required, Validators.minLength(3)]],
-		section: [''],
-		category: [''],
-		subcategory: [''],
-		brand: [''],
-		model: [''],
+		sectionId: [null],
+		categoryId: [null],
+		subcategoryId: [null],
+		brandId: [null],
+		modelId: [null],
 		price: [0, [Validators.min(0)]],
 		imageUrl: [''],
 		description: ['']
 	});
 
 	constructor() {
+		// 1. Escuchar cuando el usuario seleccione una categoría en el desplegable
+		this.productForm.get('categoryId')?.valueChanges.subscribe((catId) => {
+			this.updateSubcategoriesList(catId);
+		});
+
+		// 2. Detectar aperturas o cambios de producto (al abrir el modal de edición)
 		effect(() => {
 			const prod = this.productToEdit();
+			const open = this.isOpen();
 			this.hasImageError = false;
 
+			if (open) {
+				this.loadCatalogs();
+			}
+
 			if (prod) {
+				const catId = prod.categoryId ?? prod.category?.id ?? null;
+
 				this.productForm.patchValue({
-					id: prod.id,
-					name: prod.name,
-					section: (prod as any).section || '',
-					category: typeof prod.category === 'object' ? (prod.category as any)?.name : (prod.category || ''),
-					subcategory: (prod as any).subcategory || '',
-					brand: prod.brand || '',
-					model: (prod as any).model || '',
+					id: prod.id ?? null,
+					name: prod.name ?? '',
+					sectionId: prod.sectionId ?? prod.section?.id ?? null,
+					categoryId: catId,
+					subcategoryId: prod.subcategoryId ?? prod.subcategory?.id ?? null,
+					brandId: prod.brandId ?? prod.brand?.id ?? null,
+					modelId: prod.modelId ?? prod.model?.id ?? null,
 					price: prod.price ?? 0,
-					imageUrl: prod.imageUrl || '',
-					description: prod.description || ''
+					imageUrl: prod.imageUrl ?? '',
+					description: prod.description ?? ''
 				});
+
+				// Actualizar subcategorías inmediatamente por si las categorías ya estaban cargadas
+				this.updateSubcategoriesList(catId);
 			} else {
-				this.productForm.reset({ id: null, section: '', category: '', subcategory: '', brand: '', model: '', price: 0 });
+				this.productForm.reset({
+					id: null,
+					name: '',
+					sectionId: null,
+					categoryId: null,
+					subcategoryId: null,
+					brandId: null,
+					modelId: null,
+					price: 0,
+					imageUrl: '',
+					description: ''
+				});
+				this.subcategoriesList.set([]);
 			}
 		});
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {
+		this.loadCatalogs();
+	}
+
+	private loadCatalogs(): void {
+		this.sectionService.getSections().subscribe({
+			next: (data) => this.sectionsList.set(data),
+			error: (err) => console.error('Error al cargar secciones:', err)
+		});
+
+		this.categoryService.getCategories().subscribe({
+			next: (data) => {
+				this.categoriesList.set(data);
+				// Al recibir las categorías de la API, buscar si ya había una categoría preseleccionada
+				const currentCatId = this.productForm.get('categoryId')?.value;
+				if (currentCatId) {
+					this.updateSubcategoriesList(currentCatId);
+				}
+			},
+			error: (err) => console.error('Error al cargar categorías:', err)
+		});
+	}
+
+	// Extrae las subcategorías en memoria asociadas al ID de la categoría
+	private updateSubcategoriesList(categoryId: number | string | null): void {
+		if (!categoryId) {
+			this.subcategoriesList.set([]);
+			return;
+		}
+
+		const catIdNum = Number(categoryId);
+		const selectedCat = this.categoriesList().find(c => Number(c.id) === catIdNum);
+		const subs = selectedCat?.subcategories || [];
+
+		this.subcategoriesList.set(subs as Subcategory[]);
+
+		// Si el usuario cambió de categoría y la subcategoría seleccionada no pertenece a la nueva lista, la deselecciona
+		const currentSubId = this.productForm.get('subcategoryId')?.value;
+		if (currentSubId && !subs.some(s => Number(s.id) === Number(currentSubId))) {
+			this.productForm.patchValue({ subcategoryId: null }, { emitEvent: false });
+		}
+	}
+
+	onSearchSections(term: string): void {
+		this.sectionService.getSections(term).subscribe({
+			next: (data) => this.sectionsList.set(data),
+			error: (err) => console.error('Error al buscar secciones:', err)
+		});
+	}
 
 	close(): void {
 		this.onClose.emit();
