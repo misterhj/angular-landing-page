@@ -19,6 +19,10 @@ export class CategoryService {
 		return this.http.post<Category>(this.API_URL, category);
 	}
 
+	updateCategory(id: number, category: Partial<Category>): Observable<Category> {
+		return this.http.put<Category>(`${this.API_URL}/${id}`, category);
+	}
+
 	deleteCategory(id: number): Observable<void> {
 		return this.http.delete<void>(`${this.API_URL}/${id}`);
 	}

@@ -1,10 +1,11 @@
-import { Component, ViewChild, signal, computed } from '@angular/core';
+import { Component, ViewChild, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { ProductTableComponent } from './components/product-table/product-table.component';
 import { ProductModalComponent } from './components/product-modal/product-modal.component';
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
 import { Product } from '@core/models/product.interface';
+import { ProductService } from '@core/services/product.service';
 
 @Component({
 	selector: 'app-products',
@@ -13,11 +14,12 @@ import { Product } from '@core/models/product.interface';
 		CommonModule,
 		ProductTableComponent,
 		ProductModalComponent,
-		ConfirmModalComponent // 👈 Importamos el modal reutilizable
+		ConfirmModalComponent
 	],
 	templateUrl: './products.component.html'
 })
 export class ProductsComponent {
+	private productService = inject(ProductService); // 👈 Inyección del servicio
 
 	@ViewChild(ProductTableComponent) productTable!: ProductTableComponent;
 
@@ -50,39 +52,54 @@ export class ProductsComponent {
 		this.isModalOpen.set(false);
 	}
 
+	// 👈 Conexión HTTP Guardar (POST / PUT)
 	handleSave(productData: any): void {
-		console.log('Guardando en Backend:', productData);
+		const isEdit = !!productData.id;
 
-		this.isModalOpen.set(false);
-		if (this.productTable) {
-			this.productTable.reload();
-		}
+		const request$ = isEdit
+			? this.productService.updateProduct(productData.id, productData)
+			: this.productService.createProduct(productData);
+
+		request$.subscribe({
+			next: () => {
+				this.isModalOpen.set(false);
+				if (this.productTable) {
+					this.productTable.reload();
+				}
+			},
+			error: (err) => console.error('Error al guardar producto:', err)
+		});
 	}
 
-	// 👈 1. Al presionar el tachito de basura, guardamos el producto y abrimos el modal
 	handleDelete(product: Product): void {
 		this.productToDelete.set(product);
 		this.isDeleteModalOpen.set(true);
 	}
 
-	// 👈 2. Al confirmar dentro del modal estilizado
+	// 👈 Conexión HTTP Eliminar (DELETE)
+// Conexión HTTP Eliminar (DELETE)
 	handleConfirmDelete(): void {
 		const prod = this.productToDelete();
-		if (!prod) return;
+		
+		// 👈 Agregamos la validación de prod.id
+		if (!prod || prod.id === undefined) return;
 
 		this.isDeleting.set(true);
 
-		// Simulamos la llamada al servicio de backend
-		setTimeout(() => {
-			console.log('Producto eliminado con éxito:', prod);
+		this.productService.deleteProduct(prod.id).subscribe({
+			next: () => {
+				this.isDeleting.set(false);
+				this.isDeleteModalOpen.set(false);
+				this.productToDelete.set(null);
 
-			this.isDeleting.set(false);
-			this.isDeleteModalOpen.set(false);
-			this.productToDelete.set(null);
-
-			if (this.productTable) {
-				this.productTable.reload();
+				if (this.productTable) {
+					this.productTable.reload();
+				}
+			},
+			error: (err) => {
+				console.error('Error al eliminar producto:', err);
+				this.isDeleting.set(false);
 			}
-		}, 600);
+		});
 	}
 }

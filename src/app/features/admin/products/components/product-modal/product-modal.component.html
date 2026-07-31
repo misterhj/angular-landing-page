@@ -67,16 +67,47 @@
       </div>
     </div>
 
-    <!-- Precio e Imagen -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<!-- Precio e Imagen con Previsualización -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-1">Precio (Gs.) *</label>
-        <input type="number" formControlName="price" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition" />
+        <input 
+          type="number" 
+          formControlName="price" 
+          class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition" />
       </div>
 
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-1">URL Imagen</label>
-        <input type="text" formControlName="imageUrl" placeholder="https://..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition" />
+        <div class="flex gap-2 items-center">
+          <!-- Campo Input -->
+          <input 
+            type="text" 
+            formControlName="imageUrl" 
+            (input)="hasImageError = false"
+            placeholder="https://..." 
+            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+          
+          <!-- Miniatura / Previsualización -->
+          <div class="w-10 h-10 min-w-[2.5rem] rounded-lg border border-slate-700 bg-slate-950 overflow-hidden flex items-center justify-center shrink-0 relative group">
+            <img 
+              *ngIf="productForm.get('imageUrl')?.value && !hasImageError" 
+              [src]="productForm.get('imageUrl')?.value" 
+              (error)="hasImageError = true"
+              alt="Preview" 
+              class="w-full h-full object-cover" />
+            
+            <!-- Placeholder si no hay imagen o la URL da error -->
+            <svg 
+              *ngIf="!productForm.get('imageUrl')?.value || hasImageError" 
+              class="w-5 h-5 text-slate-500" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
 

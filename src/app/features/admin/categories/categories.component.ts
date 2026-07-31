@@ -5,7 +5,8 @@ import {
     computed,
     ViewChild,
     TemplateRef,
-    AfterViewInit
+    AfterViewInit,
+    inject
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ColumnDef } from '@tanstack/angular-table';
@@ -13,8 +14,8 @@ import { GenericTableComponent } from '@shared/components/generic-table/generic-
 import { Category, Subcategory } from '@core/models/category.interface';
 
 import { CategoryModalComponent, CategoryModalPayload } from './category-modal.component';
-// 👈 Importamos el modal de confirmación
 import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-modal.component';
+import { CategoryService } from '@core/services/category.service'; // 👈 Usamos CategoryService
 
 @Component({
     selector: 'app-categories',
@@ -23,11 +24,12 @@ import { ConfirmModalComponent } from '@shared/components/confirm-modal/confirm-
         CommonModule, 
         GenericTableComponent, 
         CategoryModalComponent,
-        ConfirmModalComponent // 👈 Agregado a imports
+        ConfirmModalComponent
     ],
     templateUrl: './categories.component.html'
 })
 export class CategoriesComponent implements OnInit, AfterViewInit {
+    private categoryService = inject(CategoryService); // 👈 Inyección
 
     @ViewChild('catTable') catTable!: GenericTableComponent;
     @ViewChild('subTable') subTable!: GenericTableComponent;
@@ -37,11 +39,12 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
 
     // Estado Form Modal
     isModalOpen = signal<boolean>(false);
+    isSaving = signal<boolean>(false);
     modalTitle = signal<string>('');
     editingItem = signal<Category | Subcategory | null>(null);
     parentCategoryIdForModal = signal<number | null>(null);
 
-    // 👈 Estado Delete Confirm Modal
+    // Estado Delete Confirm Modal
     isDeleteModalOpen = signal<boolean>(false);
     isDeleting = signal<boolean>(false);
     itemToDelete = signal<Category | Subcategory | null>(null);
@@ -101,16 +104,32 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
 
     onEditItem(item: Category | Subcategory): void {
         this.editingItem.set(item);
-        this.parentCategoryIdForModal.set(null);
-
+        
         const isSub = 'categoryId' in item;
+        this.parentCategoryIdForModal.set(isSub ? (item as Subcategory).categoryId : null);
         this.modalTitle.set(isSub ? 'Editar Subcategoría' : 'Editar Categoría Principal');
         this.isModalOpen.set(true);
     }
 
+    // 👈 Conexión HTTP Guardar (POST / PUT)
     onSaveItem(payload: CategoryModalPayload): void {
-        console.log('Guardar payload:', payload);
-        this.isModalOpen.set(false);
+        this.isSaving.set(true);
+
+        const request$ = payload.id
+            ? this.categoryService.updateCategory(payload.id, payload)
+            : this.categoryService.createCategory(payload);
+
+        request$.subscribe({
+            next: () => {
+                this.isSaving.set(false);
+                this.isModalOpen.set(false);
+                this.refreshTables();
+            },
+            error: (err) => {
+                console.error('Error al guardar categoría:', err);
+                this.isSaving.set(false);
+            }
+        });
     }
 
     // --- ACCIONES ELIMINACIÓN ---
@@ -120,24 +139,30 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
         this.isDeleteModalOpen.set(true);
     }
 
+    // 👈 Conexión HTTP Eliminar (DELETE)
     onConfirmDelete(): void {
         const item = this.itemToDelete();
         if (!item) return;
 
         this.isDeleting.set(true);
 
-        // Simulamos petición de borrado
-        setTimeout(() => {
-            console.log('Registro eliminado con éxito:', item);
-            this.isDeleting.set(false);
-            this.isDeleteModalOpen.set(false);
-            this.itemToDelete.set(null);
+        this.categoryService.deleteCategory(item.id).subscribe({
+            next: () => {
+                this.isDeleting.set(false);
+                this.isDeleteModalOpen.set(false);
+                this.itemToDelete.set(null);
 
-            // Si eliminamos la categoría principal seleccionada actualmente, reseteamos el filtro de subcategorías
-            if (this.selectedCategory()?.id === item.id && !('categoryId' in item)) {
-                this.selectedCategory.set(null);
+                if (this.selectedCategory()?.id === item.id && !('categoryId' in item)) {
+                    this.selectedCategory.set(null);
+                }
+
+                this.refreshTables();
+            },
+            error: (err) => {
+                console.error('Error al eliminar categoría:', err);
+                this.isDeleting.set(false);
             }
-        }, 800);
+        });
     }
 
     deleteMessage = computed(() => {
@@ -148,4 +173,13 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
             ? `¿Estás seguro de que deseas eliminar la subcategoría "${item.name}"?` 
             : `¿Estás seguro de que deseas eliminar "${item.name}"? Se pueden ver afectadas sus subcategorías asociadas.`;
     });
+
+    private refreshTables(): void {
+        if (this.catTable && typeof (this.catTable as any).reload === 'function') {
+            (this.catTable as any).reload();
+        }
+        if (this.subTable && typeof (this.subTable as any).reload === 'function') {
+            (this.subTable as any).reload();
+        }
+    }
 }

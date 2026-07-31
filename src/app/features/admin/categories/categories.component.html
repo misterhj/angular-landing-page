@@ -3,12 +3,13 @@
   <!-- TABLA 1: CATEGORÍAS PRINCIPALES -->
   <div>
     <app-generic-table
-		procedure="GET_CATEGORIES"
-		title="CATEGORÍAS PRINCIPALES"
-		[columns]="catColumns"
-		[customTemplates]="catTemplates()" 
-		(rowClick)="onSelectCategory($event)"
-		(addClicked)="onAddCategory()">
+      #catTable
+      procedure="GET_CATEGORIES"
+      title="CATEGORÍAS PRINCIPALES"
+      [columns]="catColumns"
+      [customTemplates]="catTemplates()" 
+      (rowClick)="onSelectCategory($event)"
+      (addClicked)="onAddCategory()">
     </app-generic-table>
   </div>
 
@@ -16,13 +17,13 @@
   <div>
     <ng-container *ngIf="selectedCategory(); else selectPrompt">
       <app-generic-table
-		#subTable
-		procedure="GET_SUBCATEGORIES"
-		[title]="'SUBCATEGORÍAS DE ' + selectedCategory()?.name"
-		[columns]="subColumns"
-		[customTemplates]="subTemplates()"
-		[defaultFilters]="subFilters()"
-		(addClicked)="onAddSubcategory()">
+        #subTable
+        procedure="GET_SUBCATEGORIES"
+        [title]="'SUBCATEGORÍAS DE ' + selectedCategory()?.name"
+        [columns]="subColumns"
+        [customTemplates]="subTemplates()"
+        [defaultFilters]="subFilters()"
+        (addClicked)="onAddSubcategory()">
       </app-generic-table>
     </ng-container>
 

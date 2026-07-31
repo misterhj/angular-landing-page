@@ -1,36 +1,46 @@
-import { Component, HostListener, input, output } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild, effect, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-modal',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './modal.component.html'
+	selector: 'app-modal',
+	standalone: true,
+	imports: [CommonModule],
+	templateUrl: './modal.component.html'
 })
 export class ModalComponent {
-  // Configuración
-  isOpen = input<boolean>(false);
-  title = input<string>('');
-  maxWidthClass = input<string>('max-w-md'); // Permite ajustar el ancho (max-w-md, max-w-2xl, etc.)
-  closeOnBackdrop = input<boolean>(true);
-  closeOnEscape = input<boolean>(true);
+	isOpen = input<boolean>(false);
+	title = input<string>('');
+	maxWidthClass = input<string>('max-w-md');
+	closeOnBackdrop = input<boolean>(true);
+	closeOnEscape = input<boolean>(true);
 
-  // Evento de cierre
-  close = output<void>();
+	close = output<void>();
 
-  // Cierre por tecla Escape
-  @HostListener('window:keydown.escape')
-  handleEscapeKey(): void {
-    if (this.isOpen() && this.closeOnEscape()) {
-      this.close.emit();
-    }
-  }
+	// 👈 Referencia al botón 'X'
+	@ViewChild('closeBtn') closeBtn!: ElementRef<HTMLButtonElement>;
 
-  // Cierre por clic en el fondo oscuro (Backdrop)
-  onBackdropClick(event: MouseEvent): void {
-    const target = event.target as HTMLElement;
-    if (this.closeOnBackdrop() && target.classList.contains('modal-backdrop')) {
-      this.close.emit();
-    }
-  }
+	constructor() {
+		// 👈 Cada vez que el modal se abre, le da foco al botón X
+		effect(() => {
+			if (this.isOpen()) {
+				setTimeout(() => {
+					this.closeBtn?.nativeElement?.focus();
+				}, 50); // Le pequeño margen para dar tiempo a que el *ngIf monte el DOM
+			}
+		});
+	}
+
+	@HostListener('window:keydown.escape')
+	handleEscapeKey(): void {
+		if (this.isOpen() && this.closeOnEscape()) {
+			this.close.emit();
+		}
+	}
+
+	onBackdropClick(event: MouseEvent): void {
+		const target = event.target as HTMLElement;
+		if (this.closeOnBackdrop() && target.classList.contains('modal-backdrop')) {
+			this.close.emit();
+		}
+	}
 }

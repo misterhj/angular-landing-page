@@ -2,8 +2,6 @@ import { Component, OnInit, inject, signal, input, output, effect } from '@angul
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Product } from '@core/models/product.interface';
-
-// 👈 1. Importar ModalComponent (ajusta la ruta según tu estructura)
 import { ModalComponent } from '@shared/components/modal/modal.component';
 
 @Component({
@@ -12,7 +10,7 @@ import { ModalComponent } from '@shared/components/modal/modal.component';
 	imports: [
 		CommonModule,
 		ReactiveFormsModule,
-		ModalComponent // 👈 2. Agregar ModalComponent aquí
+		ModalComponent
 	],
 	templateUrl: './product-modal.component.html'
 })
@@ -26,6 +24,9 @@ export class ProductModalComponent implements OnInit {
 	onSave = output<any>();
 
 	isSaving = signal<boolean>(false);
+
+	// 👈 Control de error al cargar la previsualización de la imagen
+	hasImageError = false;
 
 	sectionsList = signal<string[]>(['Electrónica y Tecnología', 'Hogar y Electrodomésticos', 'Accesorios']);
 	categoriesList = signal<string[]>(['televisores-y-audio', 'celulares-y-tablets', 'informática']);
@@ -49,6 +50,8 @@ export class ProductModalComponent implements OnInit {
 	constructor() {
 		effect(() => {
 			const prod = this.productToEdit();
+			this.hasImageError = false; // Resetear error al cambiar de producto
+
 			if (prod) {
 				this.productForm.patchValue({
 					id: prod.id,
