@@ -36,7 +36,6 @@ export class GenericTableComponent<T = any> {
     @Input({ required: true }) procedure!: string;
     @Input({ required: true }) columns: ColumnDef<T>[] = [];
 
-    // 👈 Cambiado a Input Signal
     customTemplates = input<Record<string, TemplateRef<any>>>({});
 
     @Input() title: string = '';
@@ -59,6 +58,11 @@ export class GenericTableComponent<T = any> {
         data: this.data(),
         columns: this.columns,
         pageCount: Math.ceil(this.totalCount() / this.pagination().pageSize) || 1,
+        
+        // 👈 HABILITAMOS EL RESIZE DE COLUMNAS
+        enableColumnResizing: true,
+        columnResizeMode: 'onChange',
+
         state: {
             pagination: this.pagination(),
             sorting: this.sorting(),
