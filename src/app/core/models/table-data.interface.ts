@@ -4,7 +4,7 @@ export interface TableQueryDto {
     pageSize: number;
     sortColumn?: string;
     sortDirection?: 'asc' | 'desc';
-    columnFilters?: Record<string, string>;
+    columnFilters?: Record<string, string | number>;
 }
 
 export interface PagedResultDto<T> {

@@ -1,8 +1,11 @@
-import { Component, ViewChild, TemplateRef, OnInit, output } from '@angular/core';
+import { Component, ViewChild, TemplateRef, OnInit, output, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ColumnDef } from '@tanstack/angular-table';
 
-import { GenericTableComponent } from '@shared/components/generic-table/generic-table.component';
+import { GenericTableComponent, SelectFilterConfig } from '@shared/components/generic-table/generic-table.component';
+import { SectionService } from '@core/services/section.service';
+import { CategoryService } from '@core/services/category.service';
+import { BrandService } from '@core/services/brand.service';
 import { Product } from '@core/models/product.interface';
 
 @Component({
@@ -12,6 +15,10 @@ import { Product } from '@core/models/product.interface';
 	templateUrl: './product-table.component.html'
 })
 export class ProductTableComponent implements OnInit {
+
+	private sectionService = inject(SectionService);
+	private categoryService = inject(CategoryService);
+	private brandService = inject(BrandService);
 
 	@ViewChild(GenericTableComponent) private genericTable!: GenericTableComponent<Product>;
 
@@ -31,6 +38,7 @@ export class ProductTableComponent implements OnInit {
 
 	columns: ColumnDef<Product>[] = [];
 	customTemplates: Record<string, TemplateRef<any>> = {};
+	selectFilters = signal<Record<string, SelectFilterConfig>>({});
 
 	ngOnInit(): void {
 
@@ -56,6 +64,35 @@ export class ProductTableComponent implements OnInit {
 			model: this.modelCell,
 			price: this.priceCell
 		};
+
+		this.loadFilterOptions();
+	}
+
+	// Carga las opciones para los filtros tipo Select
+	private loadFilterOptions(): void {
+		this.sectionService.getSections().subscribe({
+			next: (sections) => this.selectFilters.update(config => ({
+				...config,
+				section: { options: sections, placeholder: 'Filtrar por sección...', filterKey: 'sectionId', numeric: true }
+			})),
+			error: (err) => console.error('Error al cargar secciones para filtro:', err)
+		});
+
+		this.categoryService.getCategories().subscribe({
+			next: (categories) => this.selectFilters.update(config => ({
+				...config,
+				category: { options: categories, placeholder: 'Filtrar por categoría...', filterKey: 'categoryId', numeric: true }
+			})),
+			error: (err) => console.error('Error al cargar categorías para filtro:', err)
+		});
+
+		this.brandService.getBrands().subscribe({
+			next: (brands) => this.selectFilters.update(config => ({
+				...config,
+				brand: { options: brands, placeholder: 'Filtrar por marca...', filterKey: 'brandId', numeric: true }
+			})),
+			error: (err) => console.error('Error al cargar marcas para filtro:', err)
+		});
 	}
 
 	// Método público para recargar la tabla tras guardar/eliminar

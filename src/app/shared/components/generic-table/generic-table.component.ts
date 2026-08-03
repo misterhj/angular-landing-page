@@ -24,10 +24,21 @@ import {
 import { TableDataService } from '@core/services/table-data.service';
 import { TableQueryDto } from '@core/models/table-data.interface';
 
+import { SearchableSelectComponent, SelectOption } from '@shared/components/searchable-select/searchable-select.component';
+
+export interface SelectFilterConfig {
+    options: SelectOption[];
+    placeholder?: string;
+    // Clave con la que se enviará el filtro al API (por defecto usa el id de la columna)
+    filterKey?: string;
+    // Envía el valor como número (para IDs de otras tablas: sectionId, categoryId, etc.)
+    numeric?: boolean;
+}
+
 @Component({
     selector: 'app-generic-table',
     standalone: true,
-    imports: [CommonModule, FormsModule, FlexRenderDirective],
+    imports: [CommonModule, FormsModule, FlexRenderDirective, SearchableSelectComponent],
     templateUrl: './generic-table.component.html'
 })
 export class GenericTableComponent<T = any> {
@@ -37,6 +48,9 @@ export class GenericTableComponent<T = any> {
     @Input({ required: true }) columns: ColumnDef<T>[] = [];
 
     customTemplates = input<Record<string, TemplateRef<any>>>({});
+
+    // Configuración opcional para renderizar filtros tipo Select en ciertas columnas
+    selectFilters = input<Record<string, SelectFilterConfig>>({});
 
     @Input() title: string = '';
     @Input() showAddButton: boolean = true;
@@ -87,7 +101,7 @@ export class GenericTableComponent<T = any> {
         if (!this.procedure) return;
         this.isLoading.set(true);
 
-        const filterMap: Record<string, string> = {};
+        const filterMap: Record<string, string | number> = {};
 
         const rawDefaults = this.defaultFilters();
         Object.entries(rawDefaults).forEach(([key, val]) => {
@@ -98,7 +112,9 @@ export class GenericTableComponent<T = any> {
 
         this.columnFilters().forEach(f => {
             if (f.value !== undefined && f.value !== null && f.value !== '') {
-                filterMap[f.id] = String(f.value);
+                const config = this.selectFilters()[f.id];
+                const key = config?.filterKey ?? f.id;
+                filterMap[key] = config?.numeric ? Number(f.value) : String(f.value);
             }
         });
 
@@ -125,6 +141,14 @@ export class GenericTableComponent<T = any> {
 
     updateColumnFilter(columnId: string, event: Event): void {
         const value = (event.target as HTMLInputElement).value;
+        this.table.getColumn(columnId)?.setFilterValue(value);
+    }
+
+    updateSelectFilter(columnId: string, value: any): void {
+        // Al filtrar desde un Select volvemos a la primera página
+        if (this.table.getState().pagination.pageIndex !== 0) {
+            this.table.setPageIndex(0);
+        }
         this.table.getColumn(columnId)?.setFilterValue(value);
     }
 

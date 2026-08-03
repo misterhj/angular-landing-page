@@ -19,7 +19,9 @@
           <th 
             *ngFor="let header of headerGroup.headers" 
             [style.width.px]="header.getSize()"
-            class="px-3 py-2.5 relative group select-none overflow-hidden">
+            [class.overflow-visible]="selectFilters()[header.column.id]"
+            [class.overflow-hidden]="!selectFilters()[header.column.id]"
+            class="px-3 py-2.5 relative group select-none">
             
             <!-- CASO 1: COLUMNA DE ACCIONES -->
             <ng-container *ngIf="header.column.id === 'actions'; else standardHeader">
@@ -55,13 +57,23 @@
 
               <!-- Filtro por Columna -->
               <div *ngIf="header.column.getCanFilter()" class="mt-1.5">
-                <input 
-                  type="text"
-                  [value]="(header.column.getFilterValue() ?? '')"
-                  (input)="updateColumnFilter(header.column.id, $event)"
-                  placeholder="Filtrar..."
-                  class="w-full px-2 py-0.5 text-[11px] bg-slate-800/80 border border-slate-700/80 rounded text-slate-200 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600 font-normal"
-                />
+                <ng-container *ngIf="selectFilters()[header.column.id]; else textFilter">
+                  <app-searchable-select
+                    [options]="selectFilters()[header.column.id].options"
+                    [placeholder]="selectFilters()[header.column.id].placeholder || 'Filtrar...'"
+                    [ngModel]="header.column.getFilterValue() ?? null"
+                    (ngModelChange)="updateSelectFilter(header.column.id, $event)">
+                  </app-searchable-select>
+                </ng-container>
+                <ng-template #textFilter>
+                  <input 
+                    type="text"
+                    [value]="(header.column.getFilterValue() ?? '')"
+                    (input)="updateColumnFilter(header.column.id, $event)"
+                    placeholder="Filtrar..."
+                    class="w-full px-2 py-0.5 text-[11px] bg-slate-800/80 border border-slate-700/80 rounded text-slate-200 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600 font-normal"
+                  />
+                </ng-template>
               </div>
             </ng-template>
 
