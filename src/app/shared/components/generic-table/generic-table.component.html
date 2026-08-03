@@ -19,8 +19,8 @@
           <th 
             *ngFor="let header of headerGroup.headers" 
             [style.width.px]="header.getSize()"
-            [class.overflow-visible]="selectFilters()[header.column.id]"
-            [class.overflow-hidden]="!selectFilters()[header.column.id]"
+            [class.overflow-visible]="showFilters() && selectFilters()[header.column.id]"
+            [class.overflow-hidden]="!showFilters() || !selectFilters()[header.column.id]"
             class="px-3 py-2.5 relative group select-none">
             
             <!-- CASO 1: COLUMNA DE ACCIONES -->
@@ -34,6 +34,27 @@
                   title="Agregar nuevo registro">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+                <button
+                  *ngIf="hasActiveFilters()"
+                  (click)="clearFilters()"
+                  type="button"
+                  class="p-1 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded transition flex items-center justify-center cursor-pointer active:scale-95"
+                  title="Limpiar todos los filtros">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 16l4 4m0-4l-4 4" />
+                  </svg>
+                </button>
+                <button
+                  *ngIf="showFilters()"
+                  (click)="applyPendingTextFilters()"
+                  type="button"
+                  class="p-1 text-slate-400 hover:text-blue-400 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded transition flex items-center justify-center cursor-pointer active:scale-95"
+                  title="Buscar">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
               </div>
@@ -56,7 +77,7 @@
               </div>
 
               <!-- Filtro por Columna -->
-              <div *ngIf="header.column.getCanFilter()" class="mt-1.5">
+              <div *ngIf="showFilters() && header.column.getCanFilter()" class="mt-1.5">
                 <ng-container *ngIf="selectFilters()[header.column.id]; else textFilter">
                   <app-searchable-select
                     [options]="selectFilters()[header.column.id].options"
@@ -68,8 +89,9 @@
                 <ng-template #textFilter>
                   <input 
                     type="text"
-                    [value]="(header.column.getFilterValue() ?? '')"
-                    (input)="updateColumnFilter(header.column.id, $event)"
+                    [value]="pendingTextFilters()[header.column.id] ?? ''"
+                    (input)="onTextFilterInput(header.column.id, $event)"
+                    (keydown.enter)="applyTextFilter(header.column.id)"
                     placeholder="Filtrar..."
                     class="w-full px-2 py-0.5 text-[11px] bg-slate-800/80 border border-slate-700/80 rounded text-slate-200 focus:outline-none focus:border-blue-500 transition placeholder:text-slate-600 font-normal"
                   />
@@ -153,6 +175,21 @@
         <option [value]="50">50</option>
       </select>
       <span>de <strong>{{ totalCount() }}</strong> coincidencias</span>
+      <button
+        (click)="showFilters.set(!showFilters())"
+        type="button"
+        [class.bg-blue-600]="showFilters()"
+        [class.hover:bg-blue-500]="showFilters()"
+        [class.text-white]="showFilters()"
+        [class.bg-slate-800]="!showFilters()"
+        [class.hover:bg-slate-700]="!showFilters()"
+        [class.text-slate-300]="!showFilters()"
+        class="p-2 border border-slate-700 rounded-lg shadow transition flex items-center justify-center cursor-pointer active:scale-95"
+        [title]="showFilters() ? 'Ocultar filtros' : 'Mostrar filtros'">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
     </div>
 
     <div class="flex items-center gap-1.5">

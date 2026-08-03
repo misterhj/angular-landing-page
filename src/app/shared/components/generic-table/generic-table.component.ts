@@ -6,6 +6,7 @@ import {
     TemplateRef,
     inject,
     signal,
+    computed,
     effect,
     input
 } from '@angular/core';
@@ -67,6 +68,15 @@ export class GenericTableComponent<T = any> {
     pagination = signal<PaginationState>({ pageIndex: 0, pageSize: 10 });
     sorting = signal<SortingState>([]);
     columnFilters = signal<ColumnFiltersState>([]);
+
+    // Indica si hay filtros activos aplicados por el usuario
+    hasActiveFilters = computed(() => this.columnFilters().length > 0);
+
+    // Controla la visibilidad de los filtros (ocultos por defecto)
+    showFilters = signal<boolean>(false);
+
+    // Texto tipeado en los filtros de texto que aún no se ha aplicado
+    pendingTextFilters = signal<Record<string, string>>({});
 
     table = createAngularTable(() => ({
         data: this.data(),
@@ -139,9 +149,34 @@ export class GenericTableComponent<T = any> {
         });
     }
 
-    updateColumnFilter(columnId: string, event: Event): void {
+    // Guarda el texto tipeado en el filtro de texto sin aplicar la consulta
+    onTextFilterInput(columnId: string, event: Event): void {
         const value = (event.target as HTMLInputElement).value;
-        this.table.getColumn(columnId)?.setFilterValue(value);
+        this.pendingTextFilters.update(prev => ({ ...prev, [columnId]: value }));
+    }
+
+    // Aplica el filtro de texto al presionar Enter
+    applyTextFilter(columnId: string): void {
+        const value = this.pendingTextFilters()[columnId] ?? '';
+        if (this.table.getState().pagination.pageIndex !== 0) {
+            this.table.setPageIndex(0);
+        }
+        this.table.getColumn(columnId)?.setFilterValue(value === '' ? null : value);
+    }
+
+    // Aplica todos los filtros de texto pendientes (botón de búsqueda)
+    applyPendingTextFilters(): void {
+        if (this.table.getState().pagination.pageIndex !== 0) {
+            this.table.setPageIndex(0);
+        }
+        this.table.setColumnFilters(prev => {
+            const nonText = prev.filter(f => !this.selectFilters()[f.id]);
+            const pending: ColumnFiltersState = [];
+            Object.entries(this.pendingTextFilters()).forEach(([id, value]) => {
+                pending.push({ id, value: value === '' ? null : value });
+            });
+            return [...nonText, ...pending];
+        });
     }
 
     updateSelectFilter(columnId: string, value: any): void {
@@ -150,6 +185,11 @@ export class GenericTableComponent<T = any> {
             this.table.setPageIndex(0);
         }
         this.table.getColumn(columnId)?.setFilterValue(value);
+    }
+
+    clearFilters(): void {
+        this.pendingTextFilters.set({});
+        this.table.resetColumnFilters();
     }
 
     reload(): void {

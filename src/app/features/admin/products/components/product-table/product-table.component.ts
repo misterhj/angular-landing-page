@@ -6,6 +6,7 @@ import { GenericTableComponent, SelectFilterConfig } from '@shared/components/ge
 import { SectionService } from '@core/services/section.service';
 import { CategoryService } from '@core/services/category.service';
 import { BrandService } from '@core/services/brand.service';
+import { ModelService } from '@core/services/model.service';
 import { Product } from '@core/models/product.interface';
 
 @Component({
@@ -19,6 +20,7 @@ export class ProductTableComponent implements OnInit {
 	private sectionService = inject(SectionService);
 	private categoryService = inject(CategoryService);
 	private brandService = inject(BrandService);
+	private modelService = inject(ModelService);
 
 	@ViewChild(GenericTableComponent) private genericTable!: GenericTableComponent<Product>;
 
@@ -43,7 +45,7 @@ export class ProductTableComponent implements OnInit {
 	ngOnInit(): void {
 
 		this.columns = [
-			{ id: 'actions', header: 'Acciones', size: 80, enableSorting: false, enableColumnFilter: false },
+			{ id: 'actions', header: 'Acciones', size: 120, enableSorting: false, enableColumnFilter: false },
 			{ accessorKey: 'id', header: 'ID', size: 60, enableSorting: true, enableColumnFilter: true },
 			{ accessorKey: 'name', header: 'Producto', size: 250, enableSorting: true, enableColumnFilter: true },
 			{ accessorKey: 'section', header: 'Sección', size: 140, enableSorting: true, enableColumnFilter: true },
@@ -92,6 +94,22 @@ export class ProductTableComponent implements OnInit {
 				brand: { options: brands, placeholder: 'Filtrar por marca...', filterKey: 'brandId', numeric: true }
 			})),
 			error: (err) => console.error('Error al cargar marcas para filtro:', err)
+		});
+
+		this.categoryService.getSubcategories().subscribe({
+			next: (subcategories) => this.selectFilters.update(config => ({
+				...config,
+				subcategory: { options: subcategories, placeholder: 'Filtrar por subcategoría...', filterKey: 'subcategoryId', numeric: true }
+			})),
+			error: (err) => console.error('Error al cargar subcategorías para filtro:', err)
+		});
+
+		this.modelService.getModels().subscribe({
+			next: (models) => this.selectFilters.update(config => ({
+				...config,
+				model: { options: models, placeholder: 'Filtrar por modelo...', filterKey: 'modelId', numeric: true }
+			})),
+			error: (err) => console.error('Error al cargar modelos para filtro:', err)
 		});
 	}
 
