@@ -1,42 +1,39 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { ProductService } from '@core/services/product.service';
+import { CatalogFilterService } from '@core/services/catalog-filter.service';
 import { Product } from '@core/models/product.interface';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   template: `
-
-    <!-- PRODUCTOS DESTACADOS -->
-    <section id="destacados" class="py-16 bg-slate-900/50 border-t border-slate-800/80">
+    <!-- CATÁLOGO -->
+    <section id="catalog" class="py-16">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-end mb-12">
-          <div>
-            <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Fundas Destacadas</h2>
-            <p class="text-slate-400 text-sm mt-1">Nuestros modelos más cotizados del catálogo</p>
-          </div>
-          <a routerLink="/catalog" class="text-sm font-semibold text-blue-400 hover:text-blue-300 transition flex items-center gap-1">
-            Ver todos &rarr;
-          </a>
+
+        <div class="mb-10">
+          <h2 class="text-2xl md:text-3xl font-bold text-white tracking-tight">Catálogo</h2>
+          <p class="text-slate-400 text-sm mt-1">
+            {{ catalogFilter.searchTerm() ? 'Resultados para "' + catalogFilter.searchTerm() + '"' : 'Explora todos nuestros productos y filtra por categoría' }}
+          </p>
         </div>
 
         <!-- Spinner / Loader -->
-        <div *ngIf="isLoading()" class="py-12 flex justify-center items-center gap-3 text-slate-400">
+        <div *ngIf="isCatalogLoading()" class="py-12 flex justify-center items-center gap-3 text-slate-400">
           <div class="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Cargando productos destacados...</span>
+          <span>Cargando catálogo...</span>
         </div>
 
         <!-- Sin Productos -->
-        <div *ngIf="!isLoading() && featuredProducts().length === 0" class="py-12 text-center text-slate-500">
-          No hay productos destacados disponibles por el momento.
+        <div *ngIf="!isCatalogLoading() && filteredProducts().length === 0" class="py-12 text-center text-slate-500">
+          No se encontraron productos que coincidan con tu búsqueda.
         </div>
 
         <!-- Grid de Productos -->
-        <div *ngIf="!isLoading() && featuredProducts().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div *ngFor="let product of featuredProducts()" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col hover:border-slate-700 transition group">
+        <div *ngIf="!isCatalogLoading() && filteredProducts().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div *ngFor="let product of filteredProducts()" class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col hover:border-slate-700 transition group">
             
             <!-- Imagen del Producto -->
             <div class="w-full h-56 rounded-xl bg-slate-950 border border-slate-800/80 overflow-hidden flex items-center justify-center relative mb-4">
@@ -91,28 +88,48 @@ import { Product } from '@core/models/product.interface';
 })
 export class LandingComponent implements OnInit {
   private productService = inject(ProductService);
+  readonly catalogFilter = inject(CatalogFilterService);
 
-  featuredProducts = signal<Product[]>([]);
-  isLoading = signal<boolean>(true);
+  allProducts = signal<Product[]>([]);
+  isCatalogLoading = signal<boolean>(true);
+
+  filteredProducts = computed(() => {
+    const term = this.catalogFilter.searchTerm().trim().toLowerCase();
+    const categoryId = this.catalogFilter.selectedCategoryId();
+
+    return this.allProducts().filter((product) => {
+      if (categoryId !== null && product.categoryId !== categoryId) {
+        return false;
+      }
+
+      if (term) {
+        const haystack = [
+          product.name,
+          product.description,
+          product.brand?.name,
+          product.model?.name,
+          product.section?.name,
+          product.category?.name
+        ].filter(Boolean).join(' ').toLowerCase();
+
+        if (!haystack.includes(term)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  });
 
   ngOnInit(): void {
     this.productService.getProducts().subscribe({
       next: (products) => {
-        // 1. Buscamos primero productos asignados a alguna sección (ej: Destacados)
-        const sectionProducts = products.filter(p => p.sectionId !== null && p.sectionId !== undefined);
-
-        // 2. Si hay productos con sección, usamos esos; de lo contrario, tomamos los 4 más recientes
-        if (sectionProducts.length > 0) {
-          this.featuredProducts.set(sectionProducts.slice(0, 4));
-        } else {
-          this.featuredProducts.set(products.slice(0, 4));
-        }
-
-        this.isLoading.set(false);
+        this.allProducts.set(products);
+        this.isCatalogLoading.set(false);
       },
       error: (err) => {
         console.error('Error al cargar productos:', err);
-        this.isLoading.set(false);
+        this.isCatalogLoading.set(false);
       }
     });
   }

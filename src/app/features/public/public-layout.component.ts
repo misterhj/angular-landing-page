@@ -11,7 +11,7 @@ import { FooterComponent } from '@shared/components/footer/footer.component';
 	template: `
     <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans antialiased">
       <app-navbar />
-      <main class="flex-1">
+      <main class="flex-1 pt-48 sm:pt-36 lg:pt-24">
         <router-outlet />
       </main>
       <app-footer />
