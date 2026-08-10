@@ -7,10 +7,21 @@ import { environment } from '@env/environment';
 
 export interface LoginResponse {
 	token: string;
+	message?: string;
 }
 
 export interface RegisterResponse {
 	message: string;
+}
+
+export interface RegisterRequest {
+	email: string;
+	firstName: string;
+	lastName: string;
+	username: string;
+	password: string;
+	identityDocument?: string;
+	phoneNumber?: string;
 }
 
 @Injectable({
@@ -38,7 +49,7 @@ export class AuthService {
 	}
 
 	// METODO REGISTER
-	register(credentials: { username: string; password: string }): Observable<RegisterResponse> {
+	register(credentials: RegisterRequest): Observable<RegisterResponse> {
 		return this.http.post<RegisterResponse>(`${this.API_URL}/register`, credentials);
 	}
 

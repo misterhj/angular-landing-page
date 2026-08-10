@@ -17,6 +17,7 @@ export class LoginComponent {
 
 	isLoading = signal(false);
 	errorMessage = signal<string | null>(null);
+	notificationMessage = signal<string | null>(null);
 
 	// Señal para controlar la visibilidad del password
 	showPassword = signal(false);
@@ -39,17 +40,22 @@ export class LoginComponent {
 
 		this.isLoading.set(true);
 		this.errorMessage.set(null);
+		this.notificationMessage.set(null);
 
 		const { username, password } = this.loginForm.value;
 
 		this.authService.login({ username: username!, password: password! }).subscribe({
-			next: () => {
+			next: (response) => {
 				this.isLoading.set(false);
+				if (response?.message) {
+					this.notificationMessage.set(response.message);
+				}
 				this.router.navigate(['/admin/dashboard']);
 			},
 			error: (err) => {
 				this.isLoading.set(false);
-				this.errorMessage.set(err || 'Credenciales erróneas o fallo de conexión.');
+				const message = err instanceof Error ? err.message : err;
+				this.errorMessage.set(message || 'Credenciales erróneas o fallo de conexión.');
 			}
 		});
 	}

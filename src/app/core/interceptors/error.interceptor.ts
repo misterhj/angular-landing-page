@@ -9,9 +9,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     return next(req).pipe(
         catchError((error: HttpErrorResponse) => {
 
+            const isLoginCall = req.url.includes('/auth/login');
+
             let customErrorMessage = 'Ocurrió un error inesperado.';
 
-            if (error.status === 0) {
+            if (isLoginCall && error.error?.message) {
+                customErrorMessage = error.error.message;
+            } else if (error.status === 0) {
                 customErrorMessage = 'No se pudo conectar con el servidor. Verifica que el backend esté encendido.';
             } else if (error.status === 401) {
                 customErrorMessage = 'No autorizado.';
