@@ -62,6 +62,11 @@ export const routes: Routes = [
 				]
 			},
 			{
+				path: 'users',
+				loadComponent: () => import('./features/admin/users/users.component').then(m => m.UsersComponent),
+				data: { title: 'Usuarios', icon: 'users', showInSidebar: true }
+			},
+			{
 				path: '',
 				redirectTo: 'dashboard',
 				pathMatch: 'full'
