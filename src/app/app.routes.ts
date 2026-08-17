@@ -67,6 +67,11 @@ export const routes: Routes = [
 				data: { title: 'Usuarios', icon: 'users', showInSidebar: true }
 			},
 			{
+				path: 'settings',
+				loadComponent: () => import('./features/admin/settings/settings.component').then(m => m.SettingsComponent),
+				data: { title: 'Configuraciones', icon: 'settings', showInSidebar: true }
+			},
+			{
 				path: '',
 				redirectTo: 'dashboard',
 				pathMatch: 'full'
