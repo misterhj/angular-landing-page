@@ -5,6 +5,8 @@ import { Section } from './section.interface';
 
 export interface Product {
 	id?: number;
+	code?: string;
+	barcode?: string;
 	name: string;
 	description?: string;
 	price: number;

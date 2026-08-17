@@ -26,6 +26,16 @@
   </div>
 </ng-template>
 
+<!-- CÓDIGO -->
+<ng-template #codeCell let-product>
+  <span class="text-slate-300">{{ product.code }}</span>
+</ng-template>
+
+<!-- CÓDIGO DE BARRAS -->
+<ng-template #barcodeCell let-product>
+  <span class="text-slate-300 whitespace-nowrap">{{ product.barcode }}</span>
+</ng-template>
+
 <!-- SECCIÓN -->
 <ng-template #sectionCell let-product>
     {{ product.section?.name || product.section || '' }}

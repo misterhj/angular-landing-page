@@ -25,6 +25,8 @@ export class ProductTableComponent implements OnInit {
 	@ViewChild(GenericTableComponent) private genericTable!: GenericTableComponent<Product>;
 
 	@ViewChild('productCell', { static: true }) productCell!: TemplateRef<any>;
+	@ViewChild('codeCell', { static: true }) codeCell!: TemplateRef<any>;
+	@ViewChild('barcodeCell', { static: true }) barcodeCell!: TemplateRef<any>;
 	@ViewChild('sectionCell', { static: true }) sectionCell!: TemplateRef<any>;
 	@ViewChild('categoryCell', { static: true }) categoryCell!: TemplateRef<any>;
 	@ViewChild('subcategoryCell', { static: true }) subcategoryCell!: TemplateRef<any>;
@@ -47,6 +49,8 @@ export class ProductTableComponent implements OnInit {
 		this.columns = [
 			{ id: 'actions', header: 'Acciones', size: 120, enableSorting: false, enableColumnFilter: false },
 			{ accessorKey: 'id', header: 'ID', size: 60, enableSorting: true, enableColumnFilter: true },
+			{ accessorKey: 'code', header: 'Código', size: 120, enableSorting: true, enableColumnFilter: true },
+			{ accessorKey: 'barcode', header: 'Código de Barras', size: 150, enableSorting: true, enableColumnFilter: true },
 			{ accessorKey: 'name', header: 'Producto', size: 250, enableSorting: true, enableColumnFilter: true },
 			{ accessorKey: 'section', header: 'Sección', size: 140, enableSorting: true, enableColumnFilter: true },
 			{ accessorKey: 'category', header: 'Categoría', size: 160, enableSorting: true, enableColumnFilter: true },
@@ -59,6 +63,8 @@ export class ProductTableComponent implements OnInit {
 		this.customTemplates = {
 			actions: this.actionsCell,
 			name: this.productCell,
+			code: this.codeCell,
+			barcode: this.barcodeCell,
 			section: this.sectionCell,
 			category: this.categoryCell,
 			subcategory: this.subcategoryCell,

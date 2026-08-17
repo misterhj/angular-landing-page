@@ -54,6 +54,8 @@ export class ProductModalComponent implements OnInit {
 	// Formulario vinculado a los IDs
 	productForm: FormGroup = this.fb.group({
 		id: [null],
+		code: [''],
+		barcode: [''],
 		name: ['', [Validators.required, Validators.minLength(3)]],
 		sectionId: [null],
 		categoryId: [null],
@@ -92,6 +94,8 @@ export class ProductModalComponent implements OnInit {
 
 				this.productForm.patchValue({
 					id: prod.id ?? null,
+					code: prod.code ?? '',
+					barcode: prod.barcode ?? '',
 					name: prod.name ?? '',
 					sectionId: prod.sectionId ?? prod.section?.id ?? null,
 					categoryId: catId,
@@ -109,6 +113,8 @@ export class ProductModalComponent implements OnInit {
 			} else {
 				this.productForm.reset({
 					id: null,
+					code: '',
+					barcode: '',
 					name: '',
 					sectionId: null,
 					categoryId: null,
