@@ -28,4 +28,10 @@ export interface Product {
 
 	sectionId?: number | null;
 	section?: Section;
+
+	sectionName?: string;
+	categoryName?: string;
+	subcategoryName?: string;
+	brandName?: string;
+	modelName?: string;
 }
