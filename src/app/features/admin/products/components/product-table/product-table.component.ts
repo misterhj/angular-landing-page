@@ -119,6 +119,12 @@ export class ProductTableComponent implements OnInit {
 		});
 	}
 
+	// Devuelve la URL de la primera imagen de media, con fallback a imageUrl
+	primaryImage(product: Product): string | null {
+		const firstImage = (product.media ?? []).find(m => m.mediaType === 'image');
+		return firstImage?.url ?? product.imageUrl ?? null;
+	}
+
 	// Método público para recargar la tabla tras guardar/eliminar
 	reload(): void {
 		if (this.genericTable) {

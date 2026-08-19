@@ -7,7 +7,9 @@
   (close)="close()">
 
   <form [formGroup]="productForm" (ngSubmit)="submitForm()" class="space-y-4">
-    
+
+    <fieldset [disabled]="isSaving()" class="space-y-4 m-0 p-0 border-0 min-w-0">
+
     <!-- Nombre del Producto -->
     <div>
       <label class="block text-xs font-medium text-slate-300 mb-1">Nombre del Producto *</label>
@@ -93,7 +95,7 @@
 		</div>
 	</div>
 
-    <!-- Precio e Imagen con Previsualización -->
+    <!-- Precio -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
       <div>
         <label class="block text-xs font-medium text-slate-300 mb-1">Precio (Gs.)</label>
@@ -101,36 +103,6 @@
           type="number" 
           formControlName="price" 
           class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition" />
-      </div>
-
-      <div>
-        <label class="block text-xs font-medium text-slate-300 mb-1">URL Imagen</label>
-        <div class="flex gap-2 items-center">
-          <input 
-            type="text" 
-            formControlName="imageUrl" 
-            (input)="hasImageError = false"
-            placeholder="https://..." 
-            class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
-          
-          <div class="w-10 h-10 min-w-[2.5rem] rounded-lg border border-slate-700 bg-slate-950 overflow-hidden flex items-center justify-center shrink-0 relative group">
-            <img 
-              *ngIf="productForm.get('imageUrl')?.value && !hasImageError" 
-              [src]="productForm.get('imageUrl')?.value" 
-              (error)="hasImageError = true"
-              alt="Preview" 
-              class="w-full h-full object-cover" />
-            
-            <svg 
-              *ngIf="!productForm.get('imageUrl')?.value || hasImageError" 
-              class="w-5 h-5 text-slate-500" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -140,18 +112,148 @@
       <textarea formControlName="description" rows="3" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-blue-500 transition resize-none"></textarea>
     </div>
 
+    <!-- Especificaciones Técnicas -->
+    <div class="pt-4 border-t border-slate-800">
+      <label class="block text-xs font-medium text-slate-300 mb-2">Especificaciones Técnicas</label>
+
+      <!-- Lista de especificaciones -->
+      <div *ngIf="specs().length > 0" class="space-y-2 mb-3">
+        <div *ngFor="let spec of specs(); let i = index" class="flex items-center gap-2">
+          <input
+            type="text"
+            [value]="spec.key"
+            (input)="spec.key = $any($event.target).value"
+            placeholder="Clave (ej: material)"
+            class="w-1/3 min-w-[120px] px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+          <input
+            type="text"
+            [value]="spec.value"
+            (input)="spec.value = $any($event.target).value"
+            placeholder="Valor (ej: TPU de alta calidad)"
+            class="flex-1 min-w-0 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+          <button type="button" (click)="removeSpec(i)" class="p-1.5 text-slate-400 hover:text-red-400 transition cursor-pointer shrink-0" title="Eliminar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Agregar especificación -->
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          type="text"
+          [value]="newSpecKey()"
+          (input)="newSpecKey.set($any($event.target).value)"
+          placeholder="Clave (ej: material)"
+          class="w-1/3 min-w-[120px] px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+        <input
+          type="text"
+          [value]="newSpecValue()"
+          (input)="newSpecValue.set($any($event.target).value)"
+          (keyup.enter)="addSpec()"
+          placeholder="Valor (ej: TPU de alta calidad)"
+          class="flex-1 min-w-[160px] px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+        <button type="button" (click)="addSpec()" class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition shadow cursor-pointer shrink-0">
+          Agregar
+        </button>
+      </div>
+    </div>
+
+    <!-- Imágenes y Videos del Producto -->
+    <div class="pt-4 border-t border-slate-800">
+      <label class="block text-xs font-medium text-slate-300 mb-2">Imágenes y Videos del Producto</label>
+
+      <!-- Lista de medios -->
+      <div *ngIf="media().length > 0" class="space-y-2 mb-3">
+        <div *ngFor="let item of media(); let i = index" class="flex items-center gap-3 bg-slate-800/50 border border-slate-700 rounded-lg p-2">
+
+          <!-- Radio Principal -->
+          <input
+            type="radio"
+            name="primaryMedia"
+            [checked]="item.isPrimary"
+            (change)="setPrimaryMedia(i)"
+            class="w-4 h-4 accent-blue-500 cursor-pointer shrink-0"
+            [title]="item.isPrimary ? 'Imagen principal' : 'Marcar como principal'" />
+
+          <!-- Previsualización -->
+          <div class="w-12 h-12 min-w-[3rem] rounded-md bg-slate-950 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+            <img
+              *ngIf="item.mediaType === 'image'"
+              [src]="item.url"
+              (error)="onMediaPreviewError($event)"
+              [alt]="'Medio ' + (i + 1)"
+              class="w-full h-full object-cover" />
+            <svg *ngIf="item.mediaType === 'video'" class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </div>
+
+          <!-- URL editable -->
+          <input
+            type="text"
+            [value]="item.url"
+            (input)="item.url = $any($event.target).value"
+            placeholder="https://..."
+            class="flex-1 min-w-0 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-md text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+
+          <!-- Tipo -->
+          <span
+            class="text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-md shrink-0"
+            [class.bg-blue-500/10]="item.mediaType === 'image'"
+            [class.text-blue-400]="item.mediaType === 'image'"
+            [class.bg-purple-500/10]="item.mediaType === 'video'"
+            [class.text-purple-400]="item.mediaType === 'video'">
+            {{ item.mediaType === 'image' ? 'Imagen' : 'Video' }}
+          </span>
+
+          <!-- Eliminar -->
+          <button type="button" (click)="removeMedia(i)" class="p-1.5 text-slate-400 hover:text-red-400 transition cursor-pointer shrink-0" title="Eliminar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Agregar nuevo medio -->
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          [value]="newMediaType()"
+          (change)="newMediaType.set($any($event.target).value)"
+          class="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white focus:outline-none focus:border-blue-500 transition shrink-0">
+          <option value="image">Imagen</option>
+          <option value="video">Video</option>
+        </select>
+        <input
+          type="text"
+          [value]="newMediaUrl()"
+          (input)="newMediaUrl.set($any($event.target).value)"
+          (keyup.enter)="addMedia()"
+          placeholder="https://..."
+          class="flex-1 min-w-[200px] px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition" />
+        <button type="button" (click)="addMedia()" class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition shadow cursor-pointer shrink-0">
+          Agregar
+        </button>
+      </div>
+    </div>
+
     <!-- Botones de Acción -->
     <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
-      <button type="button" (click)="close()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white bg-slate-800 rounded-lg transition cursor-pointer">
+      <button type="button" (click)="close()" [disabled]="isSaving()" class="px-4 py-2 text-xs font-medium text-slate-400 hover:text-white bg-slate-800 rounded-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
         Cancelar
       </button>
-      <button 
-        type="submit" 
-        [disabled]="productForm.invalid"
-        class="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition shadow cursor-pointer">
-        Guardar Cambios
+      <button
+        type="submit"
+        [disabled]="productForm.invalid || isSaving()"
+        class="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition shadow cursor-pointer">
+        <span *ngIf="isSaving()" class="inline-block w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+        Guardar
       </button>
     </div>
+
+  </fieldset>
 
   </form>
 </app-modal>

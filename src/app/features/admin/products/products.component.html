@@ -11,6 +11,7 @@
   <app-product-modal
     [isOpen]="isModalOpen()"
     [productToEdit]="selectedProduct()"
+    [isSaving]="isSaving()"
     (onClose)="handleCloseModal()"
     (onSave)="handleSave($event)">
   </app-product-modal>

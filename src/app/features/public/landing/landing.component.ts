@@ -32,13 +32,13 @@ import { Product } from '@core/models/product.interface';
                   <!-- Imagen del Producto -->
                   <div class="w-full h-56 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative mb-4">
                     <img
-                      *ngIf="product.imageUrl"
-                      [src]="product.imageUrl"
+                      *ngIf="primaryImage(product) as imgSrc"
+                      [src]="imgSrc"
                       [alt]="product.name"
                       (error)="onImageError($event)"
                       class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
-                    <svg *ngIf="!product.imageUrl" class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg *ngIf="!primaryImage(product)" class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                     </svg>
                   </div>
@@ -178,6 +178,12 @@ export class LandingComponent implements OnInit, OnDestroy {
   // Si la imagen enviada por la URL scrapeada falla, ocultamos el tag <img> para activar el SVG de fallback
   onImageError(event: Event): void {
     (event.target as HTMLElement).style.display = 'none';
+  }
+
+  // Devuelve la URL de la primera imagen de media, con fallback a imageUrl
+  primaryImage(product: Product): string | null {
+    const firstImage = (product.media ?? []).find(m => m.mediaType === 'image');
+    return firstImage?.url ?? product.imageUrl ?? null;
   }
 
   // Navega a la página de detalle del producto

@@ -26,6 +26,7 @@ export class ProductsComponent {
 	// Estados de creación / edición
 	isModalOpen = signal<boolean>(false);
 	selectedProduct = signal<Product | null>(null);
+	isSaving = signal<boolean>(false);
 
 	// Estados para el Modal de Confirmación de Eliminación
 	isDeleteModalOpen = signal<boolean>(false);
@@ -70,8 +71,11 @@ export class ProductsComponent {
 			? this.productService.updateProduct(payload.id, payload)
 			: this.productService.createProduct(payload);
 
+		this.isSaving.set(true);
+
 		request$.subscribe({
 			next: () => {
+				this.isSaving.set(false);
 				this.isModalOpen.set(false);
 				if (this.productTable) {
 					this.productTable.reload();
@@ -79,6 +83,7 @@ export class ProductsComponent {
 			},
 			error: (err) => {
 				console.error('Error al guardar producto en C#:', err);
+				this.isSaving.set(false);
 			}
 		});
 	}

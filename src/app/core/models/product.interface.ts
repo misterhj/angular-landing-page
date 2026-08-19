@@ -3,6 +3,21 @@ import { Brand } from './brand.interface';
 import { Model } from './model.interface';
 import { Section } from './section.interface';
 
+export interface ProductMedia {
+	id?: number;
+	productId?: number;
+	url: string;
+	mediaType: 'image' | 'video';
+	isPrimary?: boolean;
+	isDeleted?: boolean;
+	createdBy?: number | null;
+	createdAt?: string;
+	modifiedBy?: number | null;
+	modifiedAt?: string | null;
+	deletedBy?: number | null;
+	deletedAt?: string | null;
+}
+
 export interface Product {
 	id?: number;
 	code?: string;
@@ -12,6 +27,7 @@ export interface Product {
 	price: number;
 	stock?: number;
 	imageUrl?: string;
+	media?: ProductMedia[];
 	specifications?: string;
 
 	categoryId?: number | null;
