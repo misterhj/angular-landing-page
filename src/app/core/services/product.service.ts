@@ -34,6 +34,10 @@ export class ProductService {
     return this.http.get<PagedResultDto<Product>>(this.API_URL, { params: httpParams });
   }
 
+  getProduct(id: number): Observable<Product> {
+    return this.http.get<Product>(`${this.API_URL}/${id}`);
+  }
+
   createProduct(product: Partial<Product>): Observable<Product> {
     return this.http.post<Product>(this.API_URL, product);
   }

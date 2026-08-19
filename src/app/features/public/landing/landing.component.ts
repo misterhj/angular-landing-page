@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { ProductService, ProductQueryParams } from '@core/services/product.service';
 import { CatalogFilterService } from '@core/services/catalog-filter.service';
 import { Product } from '@core/models/product.interface';
@@ -26,7 +27,7 @@ import { Product } from '@core/models/product.interface';
 
         <!-- Grid de Productos -->
         <div *ngIf="allProducts().length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div *ngFor="let product of allProducts()" class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300 transition group">
+          <div *ngFor="let product of allProducts()" (click)="goToProduct(product)" class="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-300 transition group cursor-pointer">
 
                   <!-- Imagen del Producto -->
                   <div class="w-full h-56 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative mb-4">
@@ -83,6 +84,7 @@ import { Product } from '@core/models/product.interface';
 })
 export class LandingComponent implements OnInit, OnDestroy {
   private productService = inject(ProductService);
+  private router = inject(Router);
   readonly catalogFilter = inject(CatalogFilterService);
 
   private readonly pageSize = 12;
@@ -176,5 +178,12 @@ export class LandingComponent implements OnInit, OnDestroy {
   // Si la imagen enviada por la URL scrapeada falla, ocultamos el tag <img> para activar el SVG de fallback
   onImageError(event: Event): void {
     (event.target as HTMLElement).style.display = 'none';
+  }
+
+  // Navega a la página de detalle del producto
+  goToProduct(product: Product): void {
+    if (product.id != null) {
+      this.router.navigate(['/producto', product.id]);
+    }
   }
 }
