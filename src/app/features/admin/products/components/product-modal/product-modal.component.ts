@@ -320,14 +320,14 @@ export class ProductModalComponent implements OnInit {
 		return rows;
 	}
 
-	// Serializa los pares clave/valor a un objeto JSON
-	private serializeSpecifications(rows: { key: string; value: string }[]): string {
+	// Construye el objeto JSON de specifications a partir de los pares clave/valor
+	private serializeSpecifications(rows: { key: string; value: string }[]): Record<string, string> {
 		const obj: Record<string, string> = {};
 		for (const r of rows) {
 			const key = r.key.trim();
 			if (key) obj[key] = r.value;
 		}
-		return JSON.stringify(obj);
+		return obj;
 	}
 
 	// Agrega una especificación al listado
