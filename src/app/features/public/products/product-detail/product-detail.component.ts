@@ -40,17 +40,17 @@ import { Product } from '@core/models/product.interface';
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-          <!-- Imagen -->
+<!-- Imagen -->
           <div class="w-full h-72 sm:h-96 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative">
             <img
-              *ngIf="p.imageUrl"
-              [src]="p.imageUrl"
+              *ngIf="primaryImage(p) as imgSrc"
+              [src]="imgSrc"
               [alt]="p.name"
               (error)="onImageError($event)"
               class="w-full h-full object-cover"
             />
-            <svg *ngIf="!p.imageUrl" class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            <svg *ngIf="!primaryImage(p)" class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
           </div>
 
@@ -116,14 +116,14 @@ import { Product } from '@core/models/product.interface';
         </div>
 
         <!-- Especificaciones técnicas -->
-        <div *ngIf="specsLines().length > 0" class="mt-12">
+        <div *ngIf="specEntries().length > 0" class="mt-12">
           <h2 class="text-lg font-bold text-slate-900 mb-4">Especificaciones técnicas</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-2.5">
-            <div *ngFor="let line of specsLines()" class="flex items-start gap-2 text-sm">
+            <div *ngFor="let entry of specEntries()" class="flex items-start gap-2 text-sm">
               <svg class="w-4 h-4 text-slate-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
               </svg>
-              <span class="text-slate-600">{{ line }}</span>
+              <span class="text-slate-600"><span class="font-semibold text-slate-900">{{ entry.key }}:</span> {{ entry.value }}</span>
             </div>
           </div>
         </div>
@@ -140,22 +140,20 @@ export class ProductDetailComponent implements OnInit {
 	product = signal<Product | null>(null);
 	isLoading = signal<boolean>(true);
 
-	private readonly specifications = signal<string | undefined>(undefined);
-	readonly specsLines = () =>
-		(this.specifications() ?? '')
-			.split(/\r?\n/)
-			.map(l => l.trim())
-			.filter(Boolean);
+	private readonly specifications = signal<Record<string, string> | null | undefined>(undefined);
+	readonly specEntries = () =>
+		Object.entries(this.specifications() ?? {})
+			.map(([key, value]) => ({ key, value }));
 
 	ngOnInit(): void {
-		const id = this.route.snapshot.paramMap.get('id');
-		if (!id) {
+		const slug = this.route.snapshot.paramMap.get('slug');
+		if (!slug) {
 			this.isLoading.set(false);
 			this.router.navigateByUrl('/');
 			return;
 		}
 
-		this.productService.getProduct(Number(id)).subscribe({
+		this.productService.getProductBySlug(slug).subscribe({
 			next: (p) => {
 				this.product.set(p);
 				this.specifications.set(p.specifications);
@@ -166,6 +164,12 @@ export class ProductDetailComponent implements OnInit {
 				this.isLoading.set(false);
 			}
 		});
+	}
+
+	// Devuelve la URL de la primera imagen de media, con fallback a imageUrl
+	primaryImage(product: Product): string | null {
+		const firstImage = (product.media ?? []).find(m => m.mediaType === 'image');
+		return firstImage?.url ?? product.imageUrl ?? null;
 	}
 
 	onBuy(product: Product): void {

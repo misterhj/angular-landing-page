@@ -186,10 +186,11 @@ export class LandingComponent implements OnInit, OnDestroy {
     return firstImage?.url ?? product.imageUrl ?? null;
   }
 
-  // Navega a la página de detalle del producto
+  // Navega a la página de detalle del producto usando el slug
   goToProduct(product: Product): void {
-    if (product.id != null) {
-      this.router.navigate(['/producto', product.id]);
+    const slug = product.slug ?? product.id;
+    if (slug != null) {
+      this.router.navigate(['/producto', slug]);
     }
   }
 }

@@ -12,7 +12,7 @@ export const routes: Routes = [
 				loadComponent: () => import('./features/public/landing/landing.component').then(m => m.LandingComponent)
 			},
 			{
-				path: 'producto/:id',
+				path: 'producto/:slug',
 				loadComponent: () => import('./features/public/products/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
 			}
 		]

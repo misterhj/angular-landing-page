@@ -20,6 +20,7 @@ export interface ProductMedia {
 
 export interface Product {
 	id?: number;
+	slug?: string;
 	code?: string;
 	barcode?: string;
 	name: string;
@@ -28,7 +29,7 @@ export interface Product {
 	stock?: number;
 	imageUrl?: string;
 	media?: ProductMedia[];
-	specifications?: string;
+	specifications?: Record<string, string> | null;
 
 	categoryId?: number | null;
 	category?: Category;
