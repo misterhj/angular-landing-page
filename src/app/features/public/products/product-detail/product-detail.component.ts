@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '@core/services/product.service';
@@ -41,13 +41,19 @@ import { Product } from '@core/models/product.interface';
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
 <!-- Imagen -->
-          <div class="w-full h-72 sm:h-96 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative">
+          <div
+            #imageContainer
+            class="w-full h-72 sm:h-96 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative cursor-zoom-in"
+            (mousemove)="onImageMouseMove($event)"
+            (mouseleave)="onImageMouseLeave()">
             <img
+              #detailImage
               *ngIf="primaryImage(p) as imgSrc"
               [src]="imgSrc"
               [alt]="p.name"
               (error)="onImageError($event)"
-              class="w-full h-full object-cover"
+              [ngStyle]="imageZoomStyle()"
+              class="w-full h-full object-contain transition-transform duration-200 ease-out will-change-transform"
             />
             <svg *ngIf="!primaryImage(p)" class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -93,6 +99,9 @@ import { Product } from '@core/models/product.interface';
               <span class="text-3xl font-extrabold text-slate-900">Gs. {{ p.price | number:'1.0-0' }}</span>
             </div>
 
+            <!-- Descripción -->
+            <p *ngIf="p.description" class="mt-5 text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ p.description }}</p>
+
             <!-- Acciones -->
             <div class="mt-6 flex flex-col sm:flex-row gap-3">
               <button
@@ -108,9 +117,6 @@ import { Product } from '@core/models/product.interface';
                 Consultar
               </button>
             </div>
-
-            <!-- Descripción -->
-            <p *ngIf="p.description" class="mt-6 text-sm text-slate-600 leading-relaxed">{{ p.description }}</p>
 
           </div>
         </div>
@@ -139,6 +145,13 @@ export class ProductDetailComponent implements OnInit {
 
 	product = signal<Product | null>(null);
 	isLoading = signal<boolean>(true);
+
+	// Zoom sobre la imagen centrado en el cursor
+	private readonly ZOOM = 2.5;
+	imageZoomStyle = signal<Record<string, string> | null>(null);
+
+	@ViewChild('imageContainer') imageContainer?: ElementRef<HTMLDivElement>;
+	@ViewChild('detailImage') detailImage?: ElementRef<HTMLImageElement>;
 
 	private readonly specifications = signal<Record<string, string> | null | undefined>(undefined);
 	readonly specEntries = () =>
@@ -184,5 +197,48 @@ export class ProductDetailComponent implements OnInit {
 
 	onImageError(event: Event): void {
 		(event.target as HTMLElement).style.display = 'none';
+	}
+
+	onImageMouseLeave(): void {
+		this.imageZoomStyle.set(null);
+	}
+
+	onImageMouseMove(event: MouseEvent): void {
+		const container = this.imageContainer?.nativeElement;
+		const img = this.detailImage?.nativeElement;
+		if (!container || !img) {
+			this.imageZoomStyle.set(null);
+			return;
+		}
+
+		if (!img.naturalWidth || !img.naturalHeight) {
+			this.imageZoomStyle.set(null);
+			return;
+		}
+
+		const cRect = container.getBoundingClientRect();
+		const mx = event.clientX - cRect.left;
+		const my = event.clientY - cRect.top;
+
+		// Área real de la imagen dentro del contenedor (object-contain deja márgenes)
+		const scale = Math.min(cRect.width / img.naturalWidth, cRect.height / img.naturalHeight);
+		const drawW = img.naturalWidth * scale;
+		const drawH = img.naturalHeight * scale;
+		const drawX = (cRect.width - drawW) / 2;
+		const drawY = (cRect.height - drawH) / 2;
+
+		if (mx < drawX || mx > drawX + drawW || my < drawY || my > drawY + drawH) {
+			this.imageZoomStyle.set(null);
+			return;
+		}
+
+		// Origen de transformación en el punto del cursor: la imagen se agranda y ese punto queda centrado
+		const px = ((mx - drawX) / drawW) * 100;
+		const py = ((my - drawY) / drawH) * 100;
+
+		this.imageZoomStyle.set({
+			transformOrigin: `${px}% ${py}%`,
+			transform: `scale(${this.ZOOM})`
+		});
 	}
 }

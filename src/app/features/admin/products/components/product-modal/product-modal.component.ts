@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, input, output, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, input, output, effect, ViewChildren, QueryList } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
@@ -15,6 +15,7 @@ import { ModelService } from '@core/services/model.service';
 
 import { ModalComponent } from '@shared/components/modal/modal.component';
 import { SearchableSelectComponent } from '@shared/components/searchable-select/searchable-select.component';
+import { AutoGrowDirective } from '@shared/directives/auto-grow/auto-grow.directive';
 
 @Component({
 	selector: 'app-product-modal',
@@ -23,7 +24,8 @@ import { SearchableSelectComponent } from '@shared/components/searchable-select/
 		CommonModule,
 		ReactiveFormsModule,
 		ModalComponent,
-		SearchableSelectComponent
+		SearchableSelectComponent,
+		AutoGrowDirective
 	],
 	templateUrl: './product-modal.component.html'
 })
@@ -41,6 +43,8 @@ export class ProductModalComponent implements OnInit {
 
 	onClose = output<void>();
 	onSave = output<any>();
+
+	@ViewChildren(AutoGrowDirective) autoGrowDirectives?: QueryList<AutoGrowDirective>;
 
 	// Medios del producto (imágenes/videos)
 	media = signal<ProductMedia[]>([]);
@@ -118,6 +122,7 @@ export class ProductModalComponent implements OnInit {
 				// Sincronizar listas secundarias
 				this.updateSubcategoriesList(catId);
 				this.updateModelsList(brandId);
+				this.resizeAutoGrow();
 			} else {
 				this.media.set([]);
 				this.newMediaUrl.set('');
@@ -141,6 +146,7 @@ export class ProductModalComponent implements OnInit {
 				});
 				this.subcategoriesList.set([]);
 				this.modelsList.set([]);
+				this.resizeAutoGrow();
 			}
 		});
 	// Habilitar/deshabilitar el formulario mientras se guarda
@@ -234,6 +240,13 @@ export class ProductModalComponent implements OnInit {
 
 	close(): void {
 		this.onClose.emit();
+	}
+
+	// Recalcula la altura de los textareas con appAutoGrow tras poblar el formulario
+	private resizeAutoGrow(): void {
+		setTimeout(() => {
+			this.autoGrowDirectives?.forEach(d => d.resize());
+		}, 0);
 	}
 
 	// Agrega un nuevo medio (imagen/video) al listado
