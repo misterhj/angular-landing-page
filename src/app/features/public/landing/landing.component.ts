@@ -50,7 +50,7 @@ import { Product } from '@core/models/product.interface';
                         {{ product.name }}
                       </h3>
                       <p class="text-xs text-slate-500 mt-1 line-clamp-2">
-                        {{ product.description || 'Protección de alta resistencia inspirada en diseños exclusivos.' }}
+                        {{ product.description }}
                       </p>
                     </div>
 
