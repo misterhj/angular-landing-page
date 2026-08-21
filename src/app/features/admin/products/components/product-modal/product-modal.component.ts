@@ -365,6 +365,19 @@ export class ProductModalComponent implements OnInit {
 			return;
 		}
 		const specifications = this.serializeSpecifications(this.specs());
-		this.onSave.emit({ ...this.productForm.value, specifications, media: this.media() });
+		const media = this.serializeMedia(this.media());
+		this.onSave.emit({ ...this.productForm.value, specifications, media });
+	}
+
+	// Envía solo los campos que espera el backend, sin datos de auditoría
+	private serializeMedia(rows: ProductMedia[]): ProductMedia[] {
+		return rows.map(m => ({
+			id: m.id,
+			productId: m.productId,
+			url: m.url,
+			mediaType: m.mediaType,
+			isPrimary: m.isPrimary ?? false,
+			isDeleted: m.isDeleted ?? false
+		}));
 	}
 }
