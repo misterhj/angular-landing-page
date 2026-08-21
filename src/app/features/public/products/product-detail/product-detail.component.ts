@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal, ElementRef, ViewChild } from '@angul
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ProductService } from '@core/services/product.service';
-import { Product } from '@core/models/product.interface';
+import { Product, ProductMedia } from '@core/models/product.interface';
 
 @Component({
 	selector: 'app-product-detail',
@@ -40,24 +40,59 @@ import { Product } from '@core/models/product.interface';
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-<!-- Imagen -->
-          <div
-            #imageContainer
-            class="w-full h-72 sm:h-96 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative cursor-zoom-in"
-            (mousemove)="onImageMouseMove($event)"
-            (mouseleave)="onImageMouseLeave()">
-            <img
-              #detailImage
-              *ngIf="primaryImage(p) as imgSrc"
-              [src]="imgSrc"
-              [alt]="p.name"
-              (error)="onImageError($event)"
-              [ngStyle]="imageZoomStyle()"
-              class="w-full h-full object-contain transition-transform duration-200 ease-out will-change-transform"
-            />
-            <svg *ngIf="!primaryImage(p)" class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 002-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
+<!-- Galería: visor + miniaturas -->
+          <div>
+            <div
+              #imageContainer
+              class="w-full h-72 sm:h-96 rounded-2xl bg-slate-50 border border-slate-100 overflow-hidden flex items-center justify-center relative"
+              [class.cursor-zoom-in]="!isVideoSelected(p)"
+              (mousemove)="onImageMouseMove($event)"
+              (mouseleave)="onImageMouseLeave()">
+              <ng-container *ngIf="selectedMedia(p) as current">
+                <img
+                  #detailImage
+                  *ngIf="current.mediaType === 'image'"
+                  [src]="current.url"
+                  [alt]="p.name"
+                  (error)="onImageError($event)"
+                  [ngStyle]="imageZoomStyle()"
+                  class="w-full h-full object-contain transition-transform duration-200 ease-out will-change-transform"
+                />
+                <video
+                  *ngIf="current.mediaType === 'video'"
+                  [src]="current.url"
+                  controls
+                  preload="metadata"
+                  class="w-full h-full object-contain bg-black"></video>
+              </ng-container>
+              <svg *ngIf="!selectedMedia(p)" class="w-16 h-16 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+
+            <!-- Miniaturas -->
+            <div *ngIf="mediaList(p).length > 1" class="mt-3 flex gap-2 overflow-x-auto pb-1">
+              <button
+                *ngFor="let m of mediaList(p); let i = index"
+                type="button"
+                (click)="selectMedia(i)"
+                class="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border-2 transition cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400"
+                [class.border-blue-500]="i === selectedMediaIndex()"
+                [class.border-slate-200]="i !== selectedMediaIndex()"
+                [attr.aria-label]="'Ver medio ' + (i + 1)">
+                <img
+                  *ngIf="m.mediaType === 'image'"
+                  [src]="m.url"
+                  [alt]="p.name + ' - ' + (i + 1)"
+                  (error)="onThumbError($event)"
+                  class="w-full h-full object-cover" />
+                <span *ngIf="m.mediaType === 'video'" class="absolute inset-0 flex items-center justify-center bg-slate-900">
+                  <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
 
           <!-- Información -->
@@ -150,6 +185,9 @@ export class ProductDetailComponent implements OnInit {
 	private readonly ZOOM = 2.5;
 	imageZoomStyle = signal<Record<string, string> | null>(null);
 
+	// Galería: índice del medio seleccionado
+	selectedMediaIndex = signal<number>(0);
+
 	@ViewChild('imageContainer') imageContainer?: ElementRef<HTMLDivElement>;
 	@ViewChild('detailImage') detailImage?: ElementRef<HTMLImageElement>;
 
@@ -170,6 +208,7 @@ export class ProductDetailComponent implements OnInit {
 			next: (p) => {
 				this.product.set(p);
 				this.specifications.set(p.specifications);
+				this.selectedMediaIndex.set(0);
 				this.isLoading.set(false);
 			},
 			error: (err) => {
@@ -179,10 +218,25 @@ export class ProductDetailComponent implements OnInit {
 		});
 	}
 
-	// Devuelve la URL de la primera imagen de media, con fallback a imageUrl
-	primaryImage(product: Product): string | null {
-		const firstImage = (product.media ?? []).find(m => m.mediaType === 'image');
-		return firstImage?.url ?? product.imageUrl ?? null;
+	// Lista de medios del producto, con fallback a imageUrl
+	mediaList(product: Product): ProductMedia[] {
+		const list = (product.media ?? []).filter(m => !!m.url);
+		if (list.length > 0) return list;
+		return product.imageUrl ? [{ url: product.imageUrl, mediaType: 'image' }] : [];
+	}
+
+	// Medio actualmente mostrado en el visor
+	selectedMedia(product: Product): ProductMedia | null {
+		return this.mediaList(product)[this.selectedMediaIndex()] ?? null;
+	}
+
+	isVideoSelected(product: Product): boolean {
+		return this.selectedMedia(product)?.mediaType === 'video';
+	}
+
+	selectMedia(index: number): void {
+		this.selectedMediaIndex.set(index);
+		this.imageZoomStyle.set(null);
 	}
 
 	onBuy(product: Product): void {
@@ -197,6 +251,10 @@ export class ProductDetailComponent implements OnInit {
 
 	onImageError(event: Event): void {
 		(event.target as HTMLElement).style.display = 'none';
+	}
+
+	onThumbError(event: Event): void {
+		(event.target as HTMLElement).style.visibility = 'hidden';
 	}
 
 	onImageMouseLeave(): void {
